@@ -1,0 +1,13 @@
+{
+  "id": "chatcmpl-123",
+  "model": "gpt-4o",
+  "usage": {
+    "prompt_tokens": 100,
+    "completion_tokens": 50
+    
+  },
+  "billing": {
+    "cost": 0.002
+  },
+  "choices": [{"message": {"role": "assistant", "content": "Hello!"}}]
+}

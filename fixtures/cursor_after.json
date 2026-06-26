@@ -1,0 +1,10 @@
+{
+  "request_id": "req_abc",
+  "model": "gpt-4",
+  "token_count": 200,
+  "cost": "0.004",
+  "completion": {
+    "text": "def hello(): pass",
+    "finish_reason": "stop"
+  }
+}

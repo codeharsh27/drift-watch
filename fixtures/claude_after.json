@@ -1,0 +1,9 @@
+{
+  "id": "msg_123",
+  "model": "claude-3-5-sonnet",
+  "usage": {
+    "input_tokens": 100,
+    "output_tokens": 50
+  },
+  "content": [{"type": "text", "text": "Hello!"}]
+}

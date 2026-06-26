@@ -1,0 +1,10 @@
+{
+  "id": "msg_123",
+  "model": "claude-3-opus",
+  "usage": {
+    "input_tokens": 100,
+    "output_tokens": 50,
+    "cost_usd": 0.015
+  },
+  "content": [{"type": "text", "text": "Hello!"}]
+}
