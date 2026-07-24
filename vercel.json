@@ -15,6 +15,10 @@
       "dest": "/api/server.py"
     },
     {
+      "src": "/case-study",
+      "dest": "/frontend/case-study.html"
+    },
+    {
       "src": "/static/(.*)",
       "dest": "/frontend/$1"
     },

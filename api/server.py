@@ -73,6 +73,11 @@ async def serve_frontend() -> FileResponse:
     """Serve the SPA dashboard."""
     return FileResponse(str(FRONTEND_DIR / "index.html"))
 
+@app.get("/case-study", include_in_schema=False)
+async def serve_case_study() -> FileResponse:
+    """Serve the case study page."""
+    return FileResponse(str(FRONTEND_DIR / "case-study.html"))
+
 
 @app.get("/api/health", tags=["meta"])
 async def health() -> dict:

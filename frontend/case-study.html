@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drift-Watch Case Study</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .case-study-wrap {
+      max-width: 800px;
+      margin: 80px auto;
+      padding: 0 24px;
+      padding-bottom: 120px;
+    }
+    .back-nav {
+      margin-bottom: 40px;
+    }
+    .back-nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .back-nav a:hover {
+      color: var(--text-primary);
+      border-color: var(--info);
+      background: rgba(255,255,255,0.05);
+    }
+    .cs-header {
+      margin-bottom: 60px;
+    }
+    .cs-title {
+      font-size: 3rem;
+      line-height: 1.1;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+    }
+    .cs-subtitle {
+      font-size: 1.35rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .cs-content h3 {
+      font-size: 1.6rem;
+      margin: 50px 0 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cs-content p {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+    .cs-content ul {
+      list-style-type: disc;
+      padding-left: 24px;
+      margin-bottom: 24px;
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      line-height: 1.7;
+    }
+    .cs-content li {
+      margin-bottom: 10px;
+    }
+    .cs-content strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .cs-content em {
+      color: var(--text-primary);
+    }
+    .cs-content pre {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 24px 0;
+      font-size: 0.95rem;
+    }
+    .cs-content code {
+      font-family: var(--font-mono);
+      color: var(--info);
+      background: rgba(255,255,255,0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="top">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <span class="logo-icon">◈</span>
+        <a href="/" style="color: inherit; text-decoration: none;"><span class="logo-text">drift<span class="logo-accent">-watch</span></span></a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="case-study-wrap">
+    <div class="back-nav">
+      <a href="/">← Back to Dashboard</a>
+    </div>
+
+    <header class="cs-header">
+      <h1 class="cs-title">Engineering for the Unknown: Solving the Silent Null Catastrophe</h1>
+      <p class="cs-subtitle">How we built Drift-Watch to secure data integrity across 6,500+ unstandardized AI vendor APIs.</p>
+    </header>
+
+    <div class="cs-content">
+      <h3>The Oximy Challenge</h3>
+      <p>Oximy (YC W26) tracks enterprise AI adoption across more than 6,500 tools. The core promise to the enterprise is simple but monumental: <em>We give you exact visibility into your AI spend and ROI.</em></p>
+      <p>But under the hood, fulfilling that promise requires ingesting data from thousands of different APIs. There is no standard for how AI vendors report usage. OpenAI puts tokens in one place. Anthropic calls them something else. Cursor nests them three levels deep. And crucially, <strong>they change these structures without warning.</strong></p>
+
+      <h3>The Nightmare Scenario: The Silent Null</h3>
+      <p>If a vendor's API goes down and returns a <code>500 Internal Server Error</code>, that's actually a good day. Your monitoring tools spike, PagerDuty wakes up the on-call engineer, and you fail over to a backup.</p>
+      <p>The real nightmare is when the API <em>doesn't</em> go down.</p>
+      <p>Imagine it's a Friday afternoon. A major LLM provider silently ships a minor update to their response payload. They decide to move their cost metric from <code>usage.cost</code> (a float) to <code>billing.cost_str</code> (a string). They don't bump their API version. They don't send an email.</p>
+      <p>The HTTP response is a perfect <code>200 OK</code>.</p>
+      <p>Because your data pipeline is aggressively pulling this data, your JSON parser reaches for <code>usage.cost</code>. It's missing, so it quietly evaluates to <code>null</code> or falls back to <code>0.00</code>. No exceptions are raised. No alarms go off.</p>
+      <p>Over the weekend, your enterprise customer burns through 40,000 queries. On Monday morning, they log into the Oximy dashboard and see their weekend spend was exactly $0.00.</p>
+      <p>They notice the corrupted data before you do. In B2B SaaS, this is catastrophic. Trust is broken. This is the <strong>Silent Null Catastrophe</strong>.</p>
+
+      <h3>The Failed Alternatives</h3>
+      <p>When I first approached this problem, I looked at standard validation libraries like <code>Pydantic</code> or <code>JSONSchema</code>. But at Oximy's scale, traditional validation breaks down:</p>
+      <ul>
+        <li><strong>Maintenance Hell:</strong> Writing and maintaining strict type models for 6,500+ undocumented, rapidly pivoting AI tools requires an army of engineers.</li>
+        <li><strong>Brittle Validations:</strong> Standard schemas often throw fatal errors if a vendor simply adds a new, harmless field (like a new <code>latency_ms</code> metric). We didn't want to break the pipeline for safe additions.</li>
+      </ul>
+      <p>We needed a way to detect structural drift <em>without</em> writing thousands of manual schemas.</p>
+
+      <h3>The "Aha" Moment: Shape Hashing</h3>
+      <p>Instead of manually typing out rigid models, I built Drift-Watch around a concept I call <strong>Shape Hashing</strong>.</p>
+      <p>The premise is simple: What if we could capture the "shape" of a known good JSON response and use it as a fingerprint?</p>
+      <p>The core engine is a pure-Python, zero-dependency algorithm that recursively walks any JSON tree and flattens it into a map of dot-paths to primitive types.</p>
+      <p>For example, this payload:</p>
+<pre><code>{
+  "id": "req_123",
+  "usage": {
+    "cost": 0.05
+  }
+}</code></pre>
+      <p>Is instantly flattened by the engine into a shape map:</p>
+      <ul>
+        <li><code>id: &lt;class 'str'&gt;</code></li>
+        <li><code>usage: &lt;class 'dict'&gt;</code></li>
+        <li><code>usage.cost: &lt;class 'float'&gt;</code></li>
+      </ul>
+      <p>When a new payload arrives in production, the engine flattens it the exact same way. It then runs a fast set-difference operation between the expected shape map and the current shape map.</p>
+
+      <h3>Grading the Drift</h3>
+      <p>Because we use set logic on the flattened paths, the engine can elegantly classify changes without getting confused:</p>
+      <ul>
+        <li><strong>Critical Drift (Exit Code 1):</strong> A path completely disappeared (e.g., <code>usage.cost</code> is gone), or a type flipped (e.g., <code>usage.cost</code> went from <code>float</code> to <code>str</code>). This immediately halts the CI/CD pipeline, preventing bad parsers from deploying.</li>
+        <li><strong>Informational Drift (Exit Code 0):</strong> A new path appeared (e.g., <code>usage.latency_ms</code> was added). The system logs it as a "harmless addition" and lets it pass.</li>
+      </ul>
+
+      <h3>The Result: Bulletproof AI Visibility</h3>
+      <p>By wrapping this core engine in a fast REST API (FastAPI) and a sleek, interactive frontend, Drift-Watch allows engineers to visualize schema changes in real-time.</p>
+      <p>But more importantly, by running the core <code>differ.py</code> script as a daily cron job against vendor baseline fixtures, Oximy can detect the Silent Null Catastrophe on <em>Day 0</em>.</p>
+      <p>When a vendor breaks their implicit contract, Drift-Watch catches the drift, alerts the team, and blocks deployments until the parsers are updated. It ensures that when Oximy tells an enterprise they spent $10,000, that number is mathematically, structurally guaranteed to be true.</p>
+    </div>
+  </div>
+
+  <footer class="footer-v2">
+    <div class="container" style="text-align: center; color: var(--text-muted); padding: 40px 0;">
+      Drift-Watch · Built for Oximy · YC W26
+    </div>
+  </footer>
+
+</body>
+</html>
