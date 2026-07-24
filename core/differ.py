@@ -4,12 +4,19 @@ core/differ.py
 Structural drift detection for AI vendor API responses.
 
 Provides two public functions:
-  - get_shape(obj, path="")   : Flatten any JSON object to a path→type dict.
-  - compare_shapes(before, after) : Diff two JSON objects, classify changes.
+  - get_shape(obj, path="")        : Flatten any JSON object to a path→type dict.
+  - compare_shapes(before, after)  : Diff two JSON objects, classify changes.
+
+v2 additions (backward-compatible):
+  - Value snapshots (before_value, after_value) in all change records
+  - Severity labels ("critical" / "info") on every change record
+  - drift_score (0–100) on the compare result
+  - detected_at ISO timestamp on the compare result
 """
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 
@@ -22,6 +29,47 @@ def _type_name(value: Any) -> str:
     if value is None:
         return "NoneType"
     return type(value).__name__  # int, float, str, bool, dict, list
+
+
+def _safe_preview(value: Any, max_len: int = 40) -> str:
+    """Return a short string preview of any value, truncated if needed."""
+    if value is None:
+        return "null"
+    preview = str(value)
+    if len(preview) > max_len:
+        return preview[:max_len] + "…"
+    return preview
+
+
+def _get_values(obj: Any, path: str = "") -> dict[str, Any]:
+    """Mirror of get_shape but records the actual Python values at each path.
+
+    Used internally by compare_shapes to populate before_value/after_value
+    fields in the diff result. Both dict/list nodes AND primitives are stored
+    so that removals of entire nested objects can still show a preview.
+    """
+    values: dict[str, Any] = {}
+
+    if isinstance(obj, dict):
+        if path:
+            values[path] = obj          # store the dict node itself too
+        for key, value in obj.items():
+            child_path = f"{path}.{key}" if path else key
+            values.update(_get_values(value, child_path))
+
+    elif isinstance(obj, list):
+        if path:
+            values[path] = obj          # store the list node itself
+        if obj:
+            item_path = f"{path}[0]" if path else "[0]"
+            values.update(_get_values(obj[0], item_path))
+
+    else:
+        # Primitive: str, int, float, bool, NoneType
+        if path:
+            values[path] = obj
+
+    return values
 
 
 # ---------------------------------------------------------------------------
@@ -46,6 +94,10 @@ def get_shape(obj: Any, path: str = "") -> dict[str, str]:
     Examples:
         >>> get_shape({"usage": {"cost": 0.002}})
         {'usage': 'dict', 'usage.cost': 'float'}
+
+    Notes:
+        - Arrays: only the first element is inspected to infer element schema.
+        - Empty arrays produce no child entries.
     """
     shape: dict[str, str] = {}
 
@@ -80,48 +132,73 @@ def compare_shapes(before: Any, after: Any) -> dict:
         after:  The current JSON object (latest vendor response).
 
     Returns:
-        A dictionary with four keys:
+        A dictionary with the following keys:
 
-        - ``"removed"``      : list of ``{"field": str, "was_type": str}``
-          Fields present in *before* that are missing in *after*.
-        - ``"added"``        : list of ``{"field": str, "new_type": str}``
-          Fields present in *after* that did not exist in *before*.
-        - ``"type_changed"`` : list of ``{"field": str, "was": str, "now": str}``
-          Fields present in both but whose type changed.
-        - ``"has_drift"``    : bool
-          ``True`` if any field was removed OR changed type.
-          Added-only responses are considered *growth*, not drift.
+        - ``"removed"``      : list of records for fields gone from *after*
+          Each record: ``{field, was_type, before_value, after_value, severity}``
+        - ``"added"``        : list of records for fields new in *after*
+          Each record: ``{field, new_type, after_value, severity}``
+        - ``"type_changed"`` : list of records where the type flipped
+          Each record: ``{field, was, now, before_value, after_value, severity}``
+        - ``"has_drift"``    : bool — True if any removal or type change occurred
+        - ``"drift_score"``  : int 0-100 — % of baseline fields that are critical
+        - ``"detected_at"``  : ISO-8601 UTC timestamp string
 
     Notes:
+        Added-only changes set ``has_drift=False`` — they are growth, not drift.
         Array schemas are inferred from the first element only.
-        Empty arrays in *after* will surface nested fields as removed.
     """
     shape_before = get_shape(before)
-    shape_after = get_shape(after)
+    shape_after  = get_shape(after)
+    vals_before  = _get_values(before)
+    vals_after   = _get_values(after)
 
-    removed: list[dict] = []
-    added: list[dict] = []
+    removed:      list[dict] = []
+    added:        list[dict] = []
     type_changed: list[dict] = []
 
     # Fields in before — check for removal or type change
     for field, was_type in shape_before.items():
         if field not in shape_after:
-            removed.append({"field": field, "was_type": was_type})
+            removed.append({
+                "field":        field,
+                "was_type":     was_type,
+                "before_value": _safe_preview(vals_before.get(field)),
+                "after_value":  "null",
+                "severity":     "critical",
+            })
         elif shape_after[field] != was_type:
-            type_changed.append(
-                {"field": field, "was": was_type, "now": shape_after[field]}
-            )
+            type_changed.append({
+                "field":        field,
+                "was":          was_type,
+                "now":          shape_after[field],
+                "before_value": _safe_preview(vals_before.get(field)),
+                "after_value":  _safe_preview(vals_after.get(field)),
+                "severity":     "critical",
+            })
 
     # Fields in after that didn't exist before
     for field, new_type in shape_after.items():
         if field not in shape_before:
-            added.append({"field": field, "new_type": new_type})
+            added.append({
+                "field":       field,
+                "new_type":    new_type,
+                "after_value": _safe_preview(vals_after.get(field)),
+                "severity":    "info",
+            })
 
     has_drift = bool(removed or type_changed)
 
+    # drift_score: what % of baseline fields are critically broken
+    total_fields  = len(shape_before) or 1
+    critical_hits = len(removed) + len(type_changed)
+    drift_score   = min(100, round(critical_hits / total_fields * 100))
+
     return {
-        "removed": removed,
-        "added": added,
+        "removed":      removed,
+        "added":        added,
         "type_changed": type_changed,
-        "has_drift": has_drift,
+        "has_drift":    has_drift,
+        "drift_score":  drift_score,
+        "detected_at":  datetime.now(timezone.utc).isoformat(),
     }

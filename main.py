@@ -1,161 +1,156 @@
 """
 main.py
 -------
-drift-watch CLI entrypoint.
+drift-watch CLI entrypoint — v2.
 
-Compares AI vendor response schemas and reports structural drift using
-rich colored output. Exits with code 1 if any critical drift is detected --
-suitable for use as a CI/CD gate.
+Uses core.reporter for structured data and rich for colored output.
+Exits with code 1 on any critical drift so CI/CD pipelines can gate on it.
 
 Usage:
     python main.py
 """
 
+from __future__ import annotations
+
 import io
-import json
-import pathlib
 import sys
 
-# Force UTF-8 output on Windows so emoji / unicode render correctly
+# Force UTF-8 output on Windows so unicode renders correctly
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(
-        sys.stdout.buffer, encoding="utf-8", errors="replace"
-    )
-    sys.stderr = io.TextIOWrapper(
-        sys.stderr.buffer, encoding="utf-8", errors="replace"
-    )
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
-from rich.console import Console
-from rich.table import Table
 from rich import box
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
 
-from core.differ import compare_shapes
+from core.reporter import run_full_report
 
-# Use force_terminal so rich renders colour/markup in all Windows environments
 console = Console(force_terminal=True, highlight=False)
 
-# Root directory — fixtures/ lives next to main.py
-ROOT = pathlib.Path(__file__).resolve().parent
-FIXTURES = ROOT / "fixtures"
 
 # ---------------------------------------------------------------------------
-# Vendor definitions — each entry is (display_name, before_file, after_file)
+# Table renderers
 # ---------------------------------------------------------------------------
 
-VENDORS = [
-    ("OpenAI",  "openai_before.json",  "openai_after.json"),
-    ("Claude",  "claude_before.json",  "claude_after.json"),
-    ("Cursor",  "cursor_before.json",  "cursor_after.json"),
-]
-
-
-def _load(filename: str) -> dict:
-    return json.loads((FIXTURES / filename).read_text(encoding="utf-8"))
-
-
-def _print_removed_table(removed: list[dict]) -> None:
-    """Render a red table of removed fields."""
-    table = Table(
-        title="[bold red]Removed Fields (🚨 Critical)[/bold red]",
+def _removed_table(removed: list[dict]) -> Table:
+    t = Table(
+        title="[bold red]Removed Fields[/bold red]",
         box=box.ROUNDED,
         border_style="red",
         header_style="bold red",
         show_lines=True,
     )
-    table.add_column("Field Path", style="red", no_wrap=True)
-    table.add_column("Was Type", style="bright_red", justify="center")
-
+    t.add_column("Field Path",    style="red",          no_wrap=True)
+    t.add_column("Was Type",      style="bright_red",   justify="center")
+    t.add_column("Before Value",  style="dim",          justify="left")
     for item in removed:
-        table.add_row(item["field"], item["was_type"])
+        t.add_row(item["field"], item["was_type"], item.get("before_value", "—"))
+    return t
 
-    console.print(table)
 
-
-def _print_type_changed_table(type_changed: list[dict]) -> None:
-    """Render a yellow table of type-changed fields."""
-    table = Table(
-        title="[bold yellow]Type Changes (🚨 Critical)[/bold yellow]",
+def _type_changed_table(type_changed: list[dict]) -> Table:
+    t = Table(
+        title="[bold yellow]Type Changes[/bold yellow]",
         box=box.ROUNDED,
         border_style="yellow",
         header_style="bold yellow",
         show_lines=True,
     )
-    table.add_column("Field Path", style="yellow", no_wrap=True)
-    table.add_column("Was", style="bright_yellow", justify="center")
-    table.add_column("Now", style="bright_yellow", justify="center")
-
+    t.add_column("Field Path",    style="yellow",       no_wrap=True)
+    t.add_column("Was",           style="bright_yellow", justify="center")
+    t.add_column("Now",           style="bright_yellow", justify="center")
+    t.add_column("Before → After", style="dim",         justify="left")
     for item in type_changed:
-        table.add_row(item["field"], item["was"], item["now"])
+        before_after = f"{item.get('before_value','—')}  →  {item.get('after_value','—')}"
+        t.add_row(item["field"], item["was"], item["now"], before_after)
+    return t
 
-    console.print(table)
+
+def _score_bar(score: int, width: int = 20) -> str:
+    """Return an ASCII progress bar for the drift score."""
+    filled = round(score / 100 * width)
+    bar    = "█" * filled + "░" * (width - filled)
+    color  = "red" if score >= 50 else "yellow" if score >= 20 else "green"
+    return f"[{color}]{bar}[/{color}] [bold]{score}/100[/bold]"
 
 
-def _report_vendor(name: str, before_file: str, after_file: str) -> bool:
-    """Run drift detection for one vendor and print a formatted report.
+# ---------------------------------------------------------------------------
+# Per-vendor report
+# ---------------------------------------------------------------------------
 
-    Returns True if critical drift was found, False otherwise.
-    """
-    console.rule(f"[bold cyan]{name}[/bold cyan]")
+def _report_vendor(vendor: dict) -> bool:
+    """Print a formatted report for one vendor. Returns True if drift found."""
+    name  = vendor["name"]
+    desc  = vendor.get("description", "")
+    score = vendor.get("drift_score", 0)
 
-    before = _load(before_file)
-    after  = _load(after_file)
+    console.rule(f"[bold cyan]{name}[/bold cyan]  [dim]{desc}[/dim]")
 
-    result = compare_shapes(before, after)
-
-    if not result["has_drift"]:
-        console.print("  [bold green][OK] No critical drift detected[/bold green]\n")
+    if not vendor["has_drift"]:
+        console.print("  [bold green][OK] No critical drift detected[/bold green]")
+        console.print(f"  Drift score: {_score_bar(score)}\n")
         return False
 
-    # --- Critical drift ---
-    console.print(
-        "  [bold red][!!] DRIFT DETECTED -- parser may be broken[/bold red]\n"
-    )
+    console.print("  [bold red][!!] DRIFT DETECTED -- parser may be broken[/bold red]")
+    console.print(f"  Drift score: {_score_bar(score)}\n")
 
-    if result["removed"]:
-        _print_removed_table(result["removed"])
+    if vendor["removed"]:
+        console.print(_removed_table(vendor["removed"]))
         console.print()
 
-    if result["type_changed"]:
-        _print_type_changed_table(result["type_changed"])
+    if vendor["type_changed"]:
+        console.print(_type_changed_table(vendor["type_changed"]))
         console.print()
 
-    if result["added"]:
-        added_paths = ", ".join(item["field"] for item in result["added"])
-        console.print(
-            f"  [dim][i] Added fields (non-critical / growth): {added_paths}[/dim]\n"
-        )
+    if vendor["added"]:
+        added_paths = ", ".join(item["field"] for item in vendor["added"])
+        console.print(f"  [dim][i] Added (non-critical): {added_paths}[/dim]\n")
 
     return True
 
 
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
 def main() -> None:
     console.print()
     console.print(
-        "[bold white on blue]  drift-watch -- AI Vendor Schema Monitor  [/bold white on blue]"
+        "[bold white on blue]  drift-watch v2 -- AI Vendor Schema Monitor  [/bold white on blue]"
     )
-    console.print(
-        "[dim]Comparing baseline fixtures against updated vendor responses...[/dim]\n"
-    )
+    console.print("[dim]Running full drift analysis across all vendors...[/dim]\n")
+
+    report  = run_full_report()
+    summary = report["summary"]
 
     any_drift = False
-
-    for vendor_name, before_file, after_file in VENDORS:
-        drift_found = _report_vendor(vendor_name, before_file, after_file)
-        if drift_found:
+    for vendor in report["vendors"]:
+        if _report_vendor(vendor):
             any_drift = True
 
-    # ---------------------------------------------------------------------------
-    # Overall result banner
-    # ---------------------------------------------------------------------------
+    # Overall result
     console.rule("[bold white]OVERALL RESULT[/bold white]")
+    console.print()
+    console.print(
+        f"  Vendors monitored : [bold]{summary['total_vendors']}[/bold]"
+    )
+    console.print(
+        f"  Vendors with drift: [bold {'red' if any_drift else 'green'}]"
+        f"{summary['vendors_with_drift']}[/bold {'red' if any_drift else 'green'}]"
+    )
     console.print()
 
     if any_drift:
         console.print(
             "[bold red on dark_red]  RESULT: Critical drift found. Parsers need updating.  [/bold red on dark_red]"
         )
+        console.print(
+            "[dim]  Tip: run  python -m api.server  and open http://localhost:8000 for the visual dashboard[/dim]"
+        )
         console.print()
-        # Flush before exit so rich buffer is written out
         sys.stdout.flush()
         sys.exit(1)
     else:
