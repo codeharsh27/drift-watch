@@ -23,3 +23,5 @@ targets:
     method: GET
     headers:
       Authorization: Bearer ${GROQ_API_KEY}
+    baseline: data/groq.json
+

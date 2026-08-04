@@ -103,7 +103,11 @@ def cmd_check(config_path: str = "driftwatch.yml"):
             if live_payload is None and baseline_file and os.path.exists(baseline_file):
                 console.print(f"[yellow]Note: Using baseline snapshot for {name} evaluation.[/yellow]")
                 with open(baseline_file, "r", encoding="utf-8") as bf:
-                    live_payload = json.load(bf)
+                    fallback_data = json.load(bf)
+                if isinstance(fallback_data, dict) and "baseline" in fallback_data:
+                    live_payload = fallback_data["baseline"]
+                else:
+                    live_payload = fallback_data
 
             if live_payload is None:
                 summary_table.add_row(name, url, "[bold red]FETCH ERROR[/bold red]", "100%")
@@ -112,7 +116,11 @@ def cmd_check(config_path: str = "driftwatch.yml"):
 
             if baseline_file and os.path.exists(baseline_file):
                 with open(baseline_file, "r", encoding="utf-8") as bf:
-                    baseline_json = json.load(bf)
+                    baseline_data = json.load(bf)
+                if isinstance(baseline_data, dict) and "baseline" in baseline_data:
+                    baseline_json = baseline_data["baseline"]
+                else:
+                    baseline_json = baseline_data
                 diff = compare_shapes(baseline_json, live_payload)
             else:
                 diff = compare_shapes({}, live_payload)
