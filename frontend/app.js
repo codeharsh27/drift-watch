@@ -1,33 +1,18 @@
 /**
- * app.js — drift-watch dashboard logic
- *
- * Responsibilities:
- *  - Fetch /api/report from the FastAPI server
- *  - Render summary strip, vendor cards, and raw JSON
- *  - Handle tab switching within each vendor card
- *  - Animate drift score bars on load
- *  - Provide runScan() and goScan() for button handlers
+ * app.js — drift-watch redesigned logic
  */
 
 'use strict';
 
-// ─── UTILITIES ────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
-const show = id => $(id).classList.remove('hidden');
-const hide = id => $(id).classList.add('hidden');
 
+// --- UTILITIES ---
 function esc(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
-}
-
-function scoreClass(n) {
-  if (n >= 50) return 'high';
-  if (n >= 20) return 'med';
-  return 'low';
 }
 
 function fmtTime(iso) {
@@ -38,218 +23,151 @@ function fmtTime(iso) {
   } catch { return iso || '—'; }
 }
 
-// ─── SUMMARY STRIP ────────────────────────────────────────────
-function renderSummary(data) {
-  const { summary } = data;
-  $('s-total').textContent   = summary.total_vendors;
-  $('s-drifted').textContent = summary.vendors_with_drift;
-  $('s-time').textContent    = fmtTime(data.generated_at);
-  $('s-status').textContent  = summary.overall_status;
-
-  // Also update hero stats
-  const heroTotal = $('hero-stat-total');
-  const heroDrift = $('hero-stat-drift');
-  if (heroTotal) heroTotal.textContent = summary.total_vendors;
-  if (heroDrift) heroDrift.textContent = summary.vendors_with_drift;
-
-  const el = $('s-status');
-  if (summary.overall_status === 'CRITICAL') {
-    el.textContent  = 'CRITICAL';
-    el.className    = 'sum-val vc';
+// Flat shape generator for JS (to mimic Python backend for Step 2 visual)
+function getShape(obj, prefix = '') {
+  let shape = {};
+  if (obj === null) return { [prefix || 'root']: 'NoneType' };
+  
+  if (Array.isArray(obj)) {
+    shape[prefix || 'root'] = 'list';
+    if (obj.length > 0) {
+      Object.assign(shape, getShape(obj[0], prefix));
+    }
+  } else if (typeof obj === 'object') {
+    shape[prefix || 'root'] = 'dict';
+    for (const [k, v] of Object.entries(obj)) {
+      const newKey = prefix ? `${prefix}.${k}` : k;
+      Object.assign(shape, getShape(v, newKey));
+    }
   } else {
-    el.textContent  = 'STABLE';
-    el.className    = 'sum-val vs';
+    shape[prefix || 'root'] = typeof obj;
+  }
+  return shape;
+}
+
+// --- RENDERERS ---
+
+function renderHeroWidget(vendors) {
+  const container = $('hero-live-widget');
+  if (!container) return;
+  
+  container.innerHTML = vendors.map(v => {
+    const dotColor = v.has_drift ? 'red' : 'green';
+    return `<div class="live-pill">
+      <span class="dot ${dotColor}"></span>
+      ${esc(v.name)}
+      <span style="color:var(--text-muted);font-size:0.75rem;margin-left:8px;">${fmtTime(v.detected_at)}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderPipelineSteps(vendor) {
+  if (!vendor) return;
+  
+  const step1 = $('pipeline-step1');
+  const step2 = $('pipeline-step2');
+  const step3 = $('pipeline-step3');
+  const step4Vendor = $('pipeline-step4-vendor');
+  
+  if (step1 && vendor.history && vendor.history.length > 0) {
+    // Show the actual shape keys from the backend baseline
+    step1.textContent = JSON.stringify(vendor.history[0].shape || { "status": "unknown" }, null, 2);
+  } else if (step1) {
+    step1.textContent = "{\n  // Awaiting first poll data\n}";
+  }
+  
+  if (step2 && vendor.history && vendor.history.length > 0) {
+    step2.textContent = JSON.stringify(vendor.history[0].shape, null, 2);
+  }
+  
+  if (step3) {
+    const diff = {
+      removed: vendor.removed,
+      added: vendor.added,
+      type_changed: vendor.type_changed,
+      has_drift: vendor.has_drift,
+      drift_score: vendor.drift_score
+    };
+    step3.textContent = JSON.stringify(diff, null, 2);
+  }
+  
+  if (step4Vendor) {
+    step4Vendor.textContent = vendor.name;
   }
 }
 
-// ─── TABLE RENDERERS ──────────────────────────────────────────
-function removedTable(rows) {
-  if (!rows.length) return emptyTab('✓', 'No fields were removed');
-  const trs = rows.map(r => `
-    <tr>
-      <td><span class="fpath">${esc(r.field)}</span></td>
-      <td><span class="tpill tp-crit">${esc(r.was_type)}</span></td>
-      <td><span class="vpreview" title="${esc(r.before_value)}">${esc(r.before_value)}</span></td>
-    </tr>`).join('');
-  return `<table class="dtable">
-    <thead><tr><th>Field Path</th><th>Was Type</th><th>Before Value</th></tr></thead>
-    <tbody>${trs}</tbody>
-  </table>`;
+function renderDashboardTable(data) {
+  const tbody = $('dash-tbody');
+  const lastUpdated = $('dash-last-updated');
+  if (!tbody) return;
+  
+  lastUpdated.textContent = `Last updated: ${fmtTime(data.generated_at)}`;
+  
+  tbody.innerHTML = data.vendors.map(v => {
+    const statusText = v.has_drift ? 'Drift Detected' : 'Healthy';
+    const dotClass = v.has_drift ? 'red' : 'green';
+    const polls = v.stats ? v.stats.polls : 0;
+    const drifts = v.stats ? v.stats.drifts_caught : 0;
+    
+    return `
+      <tr>
+        <td data-label="Vendor"><strong>${esc(v.name)}</strong></td>
+        <td data-label="Endpoint"><span style="font-family:monospace;font-size:0.85rem;color:var(--text-muted);">${esc(v.description.replace('Live polling from ', ''))}</span></td>
+        <td data-label="Status">
+          <div class="status-badge">
+            <span class="dot ${dotClass}"></span>
+            ${statusText}
+          </div>
+        </td>
+        <td data-label="Last Polled">${fmtTime(v.detected_at)}</td>
+        <td data-label="Polls">${polls}</td>
+        <td data-label="Drifts">${drifts}</td>
+        <td data-label="Score">
+          <span class="score-badge" style="color: ${v.has_drift ? 'var(--status-red)' : 'var(--text-muted)'}">${v.drift_score}</span>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
-function changedTable(rows) {
-  if (!rows.length) return emptyTab('✓', 'No type changes detected');
-  const trs = rows.map(r => `
-    <tr>
-      <td><span class="fpath">${esc(r.field)}</span></td>
-      <td>
-        <span class="tpill tp-crit">${esc(r.was)}</span>
-        &nbsp;→&nbsp;
-        <span class="tpill tp-warn">${esc(r.now)}</span>
-      </td>
-      <td>
-        <span class="vpreview" title="${esc(r.before_value)} → ${esc(r.after_value)}">
-          ${esc(r.before_value)} → ${esc(r.after_value)}
-        </span>
-      </td>
-    </tr>`).join('');
-  return `<table class="dtable">
-    <thead><tr><th>Field Path</th><th>Type Change</th><th>Value Change</th></tr></thead>
-    <tbody>${trs}</tbody>
-  </table>`;
-}
-
-function addedTable(rows) {
-  if (!rows.length) return emptyTab('—', 'No new fields appeared');
-  const trs = rows.map(r => `
-    <tr>
-      <td><span class="fpath">${esc(r.field)}</span></td>
-      <td><span class="tpill tp-info">${esc(r.new_type)}</span></td>
-      <td><span class="vpreview" title="${esc(r.after_value)}">${esc(r.after_value)}</span></td>
-    </tr>`).join('');
-  return `<table class="dtable">
-    <thead><tr><th>Field Path</th><th>New Type</th><th>Value</th></tr></thead>
-    <tbody>${trs}</tbody>
-  </table>`;
-}
-
-function emptyTab(icon, msg) {
-  return `<div class="empty-tab"><div class="et-icon">${icon}</div>${msg}</div>`;
-}
-
-// ─── VENDOR CARD ──────────────────────────────────────────────
-function vendorCard(v, idx) {
-  const sc = scoreClass(v.drift_score || 0);
-  const hasDrift = v.has_drift;
-  const cid = `vc${idx}`;
-
-  return `
-  <div class="vcard ${hasDrift ? 'vc-drift' : 'vc-clean'}" id="${cid}">
-
-    <div class="vc-head">
-      <div>
-        <div class="vc-name">${esc(v.name)}</div>
-        <div class="vc-desc">${esc(v.description || '')}</div>
-        ${v.stats ? `<div class="vc-stats" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-          🟢 Monitoring since ${fmtTime(v.stats.since)} | ${v.stats.polls} polls | ${v.stats.drifts_caught} drifts caught
-        </div>` : ''}
-      </div>
-      <span class="bdg ${hasDrift ? 'bdg-drift' : 'bdg-clean'}">
-        ${hasDrift ? '⚠ DRIFT' : '✓ CLEAN'}
-      </span>
-    </div>
-
-    <div class="vc-score">
-      <div class="vc-score-row">
-        <span class="vc-score-lbl">Drift Score</span>
-        <span class="vc-score-num sn-${sc}">${v.drift_score || 0} / 100</span>
-      </div>
-      <div class="score-bar">
-        <div class="score-fill sf-${sc}" id="sf-${cid}"></div>
-      </div>
-    </div>
-
-    <div class="vc-tabs" data-cid="${cid}">
-      <button class="tbn t-crit active" data-panel="p-rm-${cid}">
-        Removed (${v.removed.length})
-      </button>
-      <button class="tbn t-crit" data-panel="p-tc-${cid}">
-        Type Changed (${v.type_changed.length})
-      </button>
-      <button class="tbn" data-panel="p-add-${cid}">
-        Added (${v.added.length})
-      </button>
-    </div>
-
-    <div class="tpanel active" id="p-rm-${cid}">
-      ${removedTable(v.removed)}
-    </div>
-    <div class="tpanel" id="p-tc-${cid}">
-      ${changedTable(v.type_changed)}
-    </div>
-    <div class="tpanel" id="p-add-${cid}">
-      ${addedTable(v.added)}
-    </div>
-  </div>`;
-}
-
-// ─── RENDER VENDOR CARDS ──────────────────────────────────────
-function renderCards(data) {
-  const grid = $('cards-grid');
-  grid.innerHTML = data.vendors.map(vendorCard).join('');
-
-  // Animate score bars after brief delay (allows DOM paint)
-  setTimeout(() => {
-    data.vendors.forEach((v, i) => {
-      const bar = $(`sf-vc${i}`);
-      if (bar) bar.style.width = `${Math.min(100, v.drift_score || 0)}%`;
-    });
-  }, 120);
-
-  initTabs();
-}
-
-// ─── TAB SWITCHING ────────────────────────────────────────────
-function initTabs() {
-  document.querySelectorAll('.vc-tabs').forEach(group => {
-    group.querySelectorAll('.tbn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const panelId = btn.dataset.panel;
-        const card    = btn.closest('.vcard');
-
-        group.querySelectorAll('.tbn').forEach(b => b.classList.remove('active'));
-        card.querySelectorAll('.tpanel').forEach(p => p.classList.remove('active'));
-
-        btn.classList.add('active');
-        const panel = document.getElementById(panelId);
-        if (panel) panel.classList.add('active');
-      });
-    });
-  });
-}
-
-// ─── RAW JSON ─────────────────────────────────────────────────
-function renderRaw(data) {
-  $('raw-pre').textContent = JSON.stringify(data, null, 2);
-  show('raw-wrap');
-}
-
-// ─── MAIN SCAN FLOW ───────────────────────────────────────────
+// --- MAIN FETCH ---
 async function runScan() {
-  const btn  = $('btn-rescan');
-  const icon = $('rescan-icon');
-
-  // Loading state
-  btn.classList.add('loading');
-  btn.disabled = true;
-  show('state-loading');
-  hide('state-error');
-  hide('cards-grid');
-  hide('raw-wrap');
-
+  const btn = $('btn-refresh');
+  if (btn) {
+    btn.textContent = "Refreshing...";
+    btn.disabled = true;
+  }
+  
+  const errEl = $('state-error');
+  if (errEl) errEl.classList.add('hidden');
+  
   try {
     const resp = await fetch('/api/report');
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
-
-    hide('state-loading');
-    show('cards-grid');
-
-    renderSummary(data);
-    renderCards(data);
-    renderRaw(data);
-
+    
+    if (data && data.vendors) {
+      renderHeroWidget(data.vendors);
+      renderDashboardTable(data);
+      if (data.vendors.length > 0) {
+        renderPipelineSteps(data.vendors[0]);
+      }
+    }
   } catch (err) {
-    console.error('[drift-watch] Scan failed:', err);
-    hide('state-loading');
-    show('state-error');
+    console.error('[drift-watch] Fetch failed:', err);
+    if (errEl) errEl.classList.remove('hidden');
+    
+    const tbody = $('dash-tbody');
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:red;">Error fetching data</td></tr>`;
   } finally {
-    btn.classList.remove('loading');
-    btn.disabled = false;
+    if (btn) {
+      btn.textContent = "Refresh Data";
+      btn.disabled = false;
+    }
   }
 }
 
-// ─── PLAYGROUND ───────────────────────────────────────────────
+// --- PLAYGROUND ---
 function fillPlaygroundExample() {
   $('pg-before').value = JSON.stringify({
     "id": "req_123",
@@ -280,13 +198,13 @@ async function runPlaygroundDiff() {
   const errEl = $('pg-error');
   const resEl = $('pg-results');
   errEl.textContent = '';
-  hide('pg-results');
+  resEl.classList.add('hidden');
   
   let beforeRaw = $('pg-before').value.trim();
   let afterRaw = $('pg-after').value.trim();
 
   if (!beforeRaw || !afterRaw) {
-    errEl.textContent = 'Please enter JSON in both fields or click "Load Example"';
+    errEl.textContent = 'Please enter JSON in both fields';
     return;
   }
 
@@ -305,8 +223,7 @@ async function runPlaygroundDiff() {
   }
 
   const btn = $('btn-run-diff');
-  const originalText = btn.innerHTML;
-  btn.innerHTML = `<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px;"></span> Analyzing...`;
+  btn.textContent = "Analyzing...";
   btn.disabled = true;
 
   try {
@@ -322,40 +239,28 @@ async function runPlaygroundDiff() {
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const result = await resp.json();
     
-    // Format as a pseudo-vendor for the vendorCard renderer
-    const pseudoVendor = {
-      name: "Playground Result",
-      description: "Live diff evaluation",
-      ...result
-    };
-    
-    resEl.innerHTML = vendorCard(pseudoVendor, 'pg');
-    show('pg-results');
-    
-    // Animate score bar
-    setTimeout(() => {
-      const bar = $(`sf-vcpg`);
-      if (bar) bar.style.width = `${Math.min(100, result.drift_score || 0)}%`;
-    }, 50);
-    
-    initTabs();
+    resEl.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+    resEl.classList.remove('hidden');
     
   } catch (err) {
-    console.error('[drift-watch] Playground diff failed:', err);
-    errEl.textContent = 'API Error: Could not run diff';
+    console.error('[drift-watch] Playground failed:', err);
+    errEl.textContent = 'API Error';
   } finally {
-    btn.innerHTML = originalText;
+    btn.textContent = "Run Diff";
     btn.disabled = false;
   }
 }
 
-// ─── NAV HELPERS ──────────────────────────────────────────────
-function goScan() {
-  const el = $('scan');
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// ─── INIT ─────────────────────────────────────────────────────
+// --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
+  // Mobile Nav Toggle
+  const toggle = $('nav-toggle');
+  const links = $('nav-links');
+  if (toggle && links) {
+    toggle.addEventListener('click', () => {
+      links.classList.toggle('active');
+    });
+  }
+  
   runScan();
 });

@@ -4,480 +4,250 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>drift-watch — AI Vendor Schema Monitor</title>
-  <meta name="description" content="Structural drift detector for AI vendor API responses. Catch silent schema changes before your parsers break and customers notice." />
+  <meta name="description" content="Catch silent API drift before it breaks your app." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════
-     NAVBAR
-════════════════════════════════════════════════ -->
+<!-- NAVBAR -->
 <nav class="navbar" id="top">
   <div class="nav-container">
     <div class="nav-logo">
-      <span class="logo-icon">◈</span>
-      <span class="logo-text">drift<span class="logo-accent">-watch</span></span>
+      <span class="logo-text">drift-watch</span>
     </div>
-    <div class="nav-links">
-      <a href="#problem"      class="nav-link">The Problem</a>
+    
+    <!-- Mobile Hamburger Toggle -->
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+    
+    <div class="nav-links" id="nav-links">
       <a href="#how-it-works" class="nav-link">How It Works</a>
-      <a href="#detects"      class="nav-link">Detection</a>
-      <a href="#scan"         class="nav-link">Live Scan</a>
+      <a href="#dashboard"    class="nav-link">Dashboard</a>
       <a href="#playground"   class="nav-link">Playground</a>
-      <a href="#oximy"        class="nav-link nav-link-oximy">For Oximy</a>
+      <a href="#case-study"   class="nav-link">Case Study</a>
+      <a href="#dashboard"    class="btn-nav-cta">View Live Data →</a>
     </div>
-    <a href="/case-study" class="btn-nav-cta" style="text-decoration:none;">Read Case Study →</a>
   </div>
 </nav>
 
-<!-- ═══════════════════════════════════════════════
-     HERO
-════════════════════════════════════════════════ -->
-<section class="hero" id="hero">
-  <div class="hero-grid"></div>
-  <div class="hero-glow"></div>
-  <div class="hero-content">
-    <div class="hero-eyebrow">🛰 Built for Oximy &nbsp;·&nbsp; AI Cost Intelligence</div>
-
-    <h1 class="hero-title">Catch API <span class="gradient-text">Drift</span> Before It Breaks Your App.</h1>
+<!-- HERO -->
+<section class="section hero" id="hero">
+  <div class="container hero-container">
+    <h1 class="hero-title">Catch silent API drift before it breaks your app.</h1>
     <p class="hero-sub">
-      Vendors silently change API responses. Types flip, fields move, and your downstream systems break without warning. Drift-Watch catches structural changes instantly.
+      A lightweight, zero-dependency engine that hashes vendor API payloads to catch field removals and type mutations instantly.
     </p>
-
-    <div class="hero-cta">
-      <button class="btn-primary" id="hero-scan-btn" onclick="goScan(); runScan()">
-        ⚡ Run Live Scan
-      </button>
-      <a href="#problem" class="btn-ghost">See How It Works ↓</a>
+    <div class="hero-cta-wrap">
+      <a href="#dashboard" class="btn-primary">View Live Dashboard</a>
+      <a href="https://github.com/codeharsh27/drift-watch" target="_blank" rel="noopener" class="btn-outline">View on GitHub</a>
     </div>
-
-    <div class="hero-stats">
-      <div class="stat-chip">
-        <span class="stat-val" id="hero-stat-total">3</span>
-        <span class="stat-label">Vendors Monitored</span>
-      </div>
-      <div class="stat-sep"></div>
-      <div class="stat-chip">
-        <span class="stat-val" id="hero-stat-drift">3</span>
-        <span class="stat-label">Vendors with Drift</span>
-      </div>
-      <div class="stat-sep"></div>
-      <div class="stat-chip">
-        <span class="stat-val" id="hero-stat-false">0</span>
-        <span class="stat-label">False Positives</span>
+    
+    <!-- Hero Live Widget -->
+    <div class="hero-widget">
+      <div class="hero-widget-label">Live Status</div>
+      <div id="hero-live-widget" class="hero-live-pills">
+        <span class="pill-loading">Loading live data...</span>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════
-     BUILT BY
-════════════════════════════════════════════════ -->
-<section class="section built-by-section" style="padding: 40px 0; border-bottom: 1px solid var(--border-color); background: var(--bg-card);">
-  <div class="container" style="text-align: center;">
-    <div style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 12px;">The Creator</div>
-    <h3 style="margin-bottom: 8px; font-size: 1.5rem;">Built by <span style="color: var(--text-primary);">CodeHarsh</span></h3>
-    <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto 16px; line-height: 1.5;">
-      Full-stack engineer (Flutter / Python / Node / Postgres) moving into AI product work. Built to demonstrate a real infrastructure problem I noticed in AI-vendor-dependent products — currently monitoring live providers below.
-    </p>
-    <div>
-      <a href="https://github.com/codeharsh27" target="_blank" rel="noopener" class="btn-ghost" style="padding: 6px 12px; font-size: 0.9rem; border-radius: 4px; margin: 0 4px;">GitHub</a>
-      <a href="https://linkedin.com/in/codeharsh27" target="_blank" rel="noopener" class="btn-ghost" style="padding: 6px 12px; font-size: 0.9rem; border-radius: 4px; margin: 0 4px;">LinkedIn</a>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════
-     THE PROBLEM
-════════════════════════════════════════════════ -->
-<section class="section problem-section" id="problem">
+<!-- BUILT BY -->
+<section class="section built-by">
   <div class="container">
-    <div class="section-tag">The Problem</div>
-    <h2 class="section-title">The Problem</h2>
-    <div class="problem-layout">
-      <div>
-        <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 24px;">
-          When an LLM provider changes a field from `float` to `string`, your JSON parser might not throw an error. It might just return `null`.
-        </p>
-        <p style="font-size: 1.1rem; color: var(--text-secondary);">
-          <strong>The Result:</strong> Cost trackers fail, dashboards go blank, and data corrupts silently. Drift-Watch validates the <em>shape</em> of your data to prevent silent failures.
-        </p>
-      </div>
-
-      <!-- Before/After diff -->
-      <div class="diff-card">
-        <div class="diff-card-header">
-          <div class="diff-lbl">BEFORE — vendor v1</div>
-          <div class="diff-lbl">AFTER — silent update</div>
-        </div>
-        <div class="diff-cols">
-          <div>
-            <pre class="code-blk"><code><span class="jb">{</span>
-  <span class="jk">"id"</span>: <span class="js">"chatcmpl-123"</span>,
-  <span class="jk">"model"</span>: <span class="js">"gpt-4"</span>,
-  <span class="jk">"usage"</span>: <span class="jb">{</span>
-    <span class="jk">"prompt_tokens"</span>: <span class="jn">100</span>,
-    <span class="jk">"completion_tokens"</span>: <span class="jn">50</span>,
-<span class="line-removed">    "cost": 0.002</span>
-  <span class="jb">}</span>
-<span class="jb">}</span></code></pre>
-          </div>
-          <div class="diff-arrow-icon">→</div>
-          <div>
-            <pre class="code-blk"><code><span class="jb">{</span>
-  <span class="jk">"id"</span>: <span class="js">"chatcmpl-123"</span>,
-  <span class="jk">"model"</span>: <span class="js">"gpt-4o"</span>,
-  <span class="jk">"usage"</span>: <span class="jb">{</span>
-    <span class="jk">"prompt_tokens"</span>: <span class="jn">100</span>,
-    <span class="jk">"completion_tokens"</span>: <span class="jn">50</span>
-  <span class="jb">}</span>,
-<span class="line-added">  "billing": { "cost": 0.002 }</span>
-<span class="jb">}</span></code></pre>
-          </div>
-        </div>
-        <div class="diff-verdict">
-          <span>🚨</span>
-          <span>
-            <code>usage.cost</code> removed — your parser returns <code>null</code>.
-            Cost recorded as $0. No error thrown.
-          </span>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════
-     HOW IT WORKS
-════════════════════════════════════════════════ -->
-<section class="section how-section" id="how-it-works">
-  <div class="container">
-    <div class="section-tag">Under the Hood</div>
-    <h2 class="section-title">How drift-watch Works</h2>
-    <p class="section-desc">
-      A two-function pure-Python core with zero dependencies.
-    </p>
-
-    <div class="steps-flow">
-      <div class="step-card">
-        <div class="step-num">01</div>
-        <div class="step-desc"><strong>Schema Hashing</strong><br/>Flattens and maps API structures.</div>
-      </div>
-      <div class="step-join">→</div>
-      <div class="step-card">
-        <div class="step-num">02</div>
-        <div class="step-desc"><strong>Strict Diffing</strong><br/>Compares incoming vs expected structures.</div>
-      </div>
-      <div class="step-join">→</div>
-      <div class="step-card">
-        <div class="step-num">03</div>
-        <div class="step-desc"><strong>Drift Scoring</strong><br/>Scores severity based on missing fields or type changes.</div>
-      </div>
-    </div>
-
-    <!-- Code explainer -->
-    <div class="code-ex">
-      <div>
-        <div class="code-ex-label">get_shape() — flattens nested JSON</div>
-        <pre class="code-blk sm"><code><span class="jc">// Input</span>
-<span class="jb">{</span> <span class="jk">"usage"</span>: <span class="jb">{</span> <span class="jk">"cost"</span>: <span class="jn">0.002</span> <span class="jb">}</span> <span class="jb">}</span>
-
-<span class="jc">// Output — flat path→type map</span>
-<span class="jb">{</span>
-  <span class="js">"usage"</span>:      <span class="jk">"dict"</span>,
-  <span class="js">"usage.cost"</span>: <span class="jk">"float"</span>
-<span class="jb">}</span></code></pre>
-      </div>
-      <div class="code-ex-sep">→ diff →</div>
-      <div>
-        <div class="code-ex-label">compare_shapes() — classifies every change</div>
-        <pre class="code-blk sm"><code><span class="jb">{</span>
-  <span class="jk">"removed"</span>: <span class="jb">[</span>
-    <span class="jb">{</span>
-      <span class="js">"field"</span>:        <span class="jk">"usage.cost"</span>,
-      <span class="js">"was_type"</span>:     <span class="jk">"float"</span>,
-      <span class="js">"before_value"</span>: <span class="jk">"0.002"</span>,
-      <span class="js">"severity"</span>:     <span class="jk">"critical"</span>
-    <span class="jb">}</span>
-  <span class="jb">]</span>,
-  <span class="jk">"has_drift"</span>:   <span class="jn">true</span>,
-  <span class="jk">"drift_score"</span>: <span class="jn">60</span>
-<span class="jb">}</span></code></pre>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════
-     WHAT GETS DETECTED
-════════════════════════════════════════════════ -->
-<section class="section detect-section" id="detects">
-  <div class="container">
-    <div class="section-tag">Detection Types</div>
-    <h2 class="section-title">What Gets Flagged &amp; Why</h2>
-    <p class="section-desc">
-      Not every change is dangerous. drift-watch draws a clear line between
-      changes that will break your parsers and changes that are just vendor growth.
-    </p>
-
-    <div class="detect-grid">
-
-      <div class="detect-card dc-critical">
-        <div class="dc-badge critical">🚨 Critical Drift</div>
-        <h3>Fields Removed</h3>
-        <p>
-          A field your parser depends on has disappeared from the vendor response.
-          Even if the field silently becomes <code>null</code>, your cost tracking
-          returns zero — and no exception is raised anywhere in the stack.
-        </p>
-        <div class="dc-example">
-          <code>usage.cost_usd</code> → <span class="txt-removed">gone</span>
-        </div>
-      </div>
-
-      <div class="detect-card dc-critical">
-        <div class="dc-badge critical">🚨 Critical Drift</div>
-        <h3>Type Changed</h3>
-        <p>
-          The field still exists, but its type flipped. A <code>float</code> becoming
-          a <code>string</code> passes your null check and truthy check — but breaks
-          every arithmetic operation silently. <code>"0.004" + 0.001</code> is
-          <code>"0.0040.001"</code> in many languages.
-        </p>
-        <div class="dc-example">
-          <code>cost: <span class="txt-was">0.004</span></code>
-          &nbsp;→&nbsp;
-          <code>cost: <span class="txt-now">"0.004"</span></code>
-        </div>
-      </div>
-
-      <div class="detect-card dc-info">
-        <div class="dc-badge info">ℹ️ Informational</div>
-        <h3>Fields Added</h3>
-        <p>
-          New fields appeared in the vendor response. Your existing parsers
-          still function correctly — this is vendor growth, not breakage.
-          drift-watch tracks it for awareness but does <em>not</em>
-          flag it as critical and does <em>not</em> exit non-zero.
-        </p>
-        <div class="dc-example">
-          <code>billing.cost</code> → <span class="txt-added">new (non-breaking)</span>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════
-     LIVE SCAN RESULTS
-════════════════════════════════════════════════ -->
-<section class="section scan-section" id="scan">
-  <div class="container">
-
-    <div class="scan-top">
-      <div>
-        <div class="section-tag">Live Detection</div>
-        <h2 class="section-title">Real-Time Drift Report</h2>
-        <p class="section-desc" style="margin-bottom:0">
-          Live results from running <code>compare_shapes()</code> across all vendor fixture pairs.
-          Each card shows the drift score, removed fields, and type changes.
-        </p>
-      </div>
-      <button class="btn-rescan" id="btn-rescan" onclick="runScan()">
-        <span class="ri" id="rescan-icon">↺</span> Run Scan
-      </button>
-    </div>
-
-    <!-- Summary strip -->
-    <div class="summary-strip" id="sum-strip">
-      <div class="sum-card">
-        <div class="sum-val" id="s-total">—</div>
-        <div class="sum-label">Vendors Monitored</div>
-      </div>
-      <div class="sum-card sc-critical">
-        <div class="sum-val vc" id="s-drifted">—</div>
-        <div class="sum-label">Vendors with Drift</div>
-      </div>
-      <div class="sum-card">
-        <div class="sum-val" id="s-status">—</div>
-        <div class="sum-label">Overall Status</div>
-      </div>
-      <div class="sum-card">
-        <div class="sum-val dim" id="s-time">—</div>
-        <div class="sum-label">Last Scanned</div>
-      </div>
-    </div>
-
-    <!-- Loading -->
-    <div id="state-loading" class="state-box">
-      <div class="spinner"></div>
-      <p>Running drift analysis across all vendors&hellip;</p>
-    </div>
-
-    <!-- Error -->
-    <div id="state-error" class="state-box hidden">
-      <div class="ei">⚠️</div>
-      <h3>Cannot connect to drift-watch API</h3>
-      <p>
-        Start the server first:<br />
-        <code style="display:inline-block;margin-top:10px;">python -m api.server</code>
+    <div class="built-by-card">
+      <div class="built-by-eyebrow">The Creator</div>
+      <h3 class="built-by-title">Built by CodeHarsh</h3>
+      <p class="built-by-desc">
+        Full-stack engineer (Flutter / Python / Node / Postgres) moving into AI product work. Built to demonstrate a real infrastructure problem I noticed in AI-vendor-dependent products — currently monitoring live providers below.
       </p>
+      <div class="built-by-links">
+        <a href="https://github.com/codeharsh27" target="_blank" rel="noopener" class="btn-text">GitHub</a>
+        <a href="https://linkedin.com/in/codeharsh27" target="_blank" rel="noopener" class="btn-text">LinkedIn</a>
+      </div>
     </div>
-
-    <!-- Vendor cards -->
-    <div id="cards-grid" class="cards-grid hidden"></div>
-
-    <!-- Raw JSON -->
-    <details class="raw-wrap hidden" id="raw-wrap">
-      <summary>View raw API response (JSON)</summary>
-      <pre class="raw-pre" id="raw-pre"></pre>
-    </details>
-
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════
-     PLAYGROUND
-════════════════════════════════════════════════ -->
-<section class="section playground-section" id="playground">
+<!-- HOW IT WORKS -->
+<section class="section pipeline-section" id="how-it-works">
   <div class="container">
-    <div class="section-tag">Interactive</div>
-    <div class="pg-container">
-      <div class="pg-editors">
-        <div class="pg-editor-wrap">
-          <div class="pg-editor-head">
-            <span class="pg-label">Baseline JSON (Expected)</span>
-            <button class="btn-pg-fill" onclick="fillPlaygroundExample()">Load Example</button>
-          </div>
-          <textarea id="pg-before" class="pg-textarea" spellcheck="false"></textarea>
+    <div class="section-eyebrow">Pipeline</div>
+    <h2 class="section-title">How It Works</h2>
+    
+    <div class="pipeline-grid">
+      
+      <!-- Step 1 -->
+      <div class="pipeline-step">
+        <div class="step-header">
+          <span class="step-num">01 / Poll</span>
         </div>
-        <div class="pg-editor-wrap">
-          <div class="pg-editor-head">
-            <span class="pg-label">Current JSON (Received)</span>
-          </div>
-          <textarea id="pg-after" class="pg-textarea" spellcheck="false"></textarea>
+        <p class="step-desc">Fetch the real live API response from a vendor endpoint.</p>
+        <div class="step-artifact">
+          <div class="artifact-header">Live JSON Response (Truncated)</div>
+          <pre class="code-blk" id="pipeline-step1">Loading...</pre>
         </div>
       </div>
       
-      <div class="pg-actions">
-        <button id="btn-run-diff" class="btn-primary" onclick="runPlaygroundDiff()">
-          Run Structural Diff
-        </button>
-        <span id="pg-error" class="pg-error-msg"></span>
+      <!-- Step 2 -->
+      <div class="pipeline-step">
+        <div class="step-header">
+          <span class="step-num">02 / Shape Hash</span>
+        </div>
+        <p class="step-desc">Flatten the JSON into a dot-path type map. This strips away dynamic values and leaves only the structural signature.</p>
+        <div class="step-artifact">
+          <div class="artifact-header">Live Computed Shape</div>
+          <pre class="code-blk" id="pipeline-step2">Loading...</pre>
+        </div>
+      </div>
+      
+      <!-- Step 3 -->
+      <div class="pipeline-step">
+        <div class="step-header">
+          <span class="step-num">03 / Diff</span>
+        </div>
+        <p class="step-desc">Strictly compare the new shape against the known baseline. Any removed fields or mutated types are caught instantly.</p>
+        <div class="step-artifact">
+          <div class="artifact-header">Live Diff Output</div>
+          <pre class="code-blk" id="pipeline-step3">Loading...</pre>
+        </div>
+      </div>
+      
+      <!-- Step 4 -->
+      <div class="pipeline-step">
+        <div class="step-header">
+          <span class="step-num">04 / Alert</span>
+        </div>
+        <p class="step-desc">If a breaking structural change is found, an alert is dispatched via webhook (e.g., to Discord) and the CI pipeline fails.</p>
+        <div class="step-artifact">
+          <div class="artifact-header">Example Webhook Alert</div>
+          <div class="mock-discord">
+            <div class="md-author">drift-watch <span class="md-bot">BOT</span></div>
+            <div class="md-content">
+              <strong>🚨 Drift Detected for <span id="pipeline-step4-vendor">Vendor</span>!</strong><br/>
+              - <strong>Removed:</strong> <code>models.pricing</code> (was float)<br/>
+              - <strong>Type Changed:</strong> <code>models.id</code> (was string -> now int)
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div id="pg-results" class="pg-results-area hidden">
-        <!-- Rendered via JS -->
-      </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════
-     OXIMY HARD PROBLEMS SECTION
-════════════════════════════════════════════════ -->
-<section class="section oximy-section" id="oximy">
+<!-- LIVE MONITORING DASHBOARD -->
+<section class="section dashboard-section" id="dashboard">
   <div class="container">
-    <div class="section-tag">Case Study: Oximy (YC W26)</div>
-    <h2 class="section-title">Originally Built for Oximy's Cost Visibility Problem</h2>
-    <p class="section-desc">
-      Oximy tracks 6,500+ tools to prove enterprise AI ROI. 
-      Silent schema changes across thousands of undocumented APIs can destroy their data integrity. This project was built to solve their specific version of this problem.
-    </p>
+    <div class="section-eyebrow">Real-Time</div>
+    <h2 class="section-title">Live Monitoring Dashboard</h2>
+    <div class="dashboard-controls">
+      <button class="btn-outline btn-refresh" id="btn-refresh" onclick="runScan()">Refresh Data</button>
+      <span class="last-updated" id="dash-last-updated">Updating...</span>
+    </div>
+
+    <!-- Error State -->
+    <div id="state-error" class="dash-error hidden">
+      Failed to connect to the /api/report endpoint. Is the server running?
+    </div>
     
-    <div class="hp-grid">
-      <div class="hp-card hp-primary">
-        <div class="hp-eyebrow">Hard Problem #1</div>
-        <h3 class="hp-title">6,500+ Unstandardized APIs</h3>
-        <p class="hp-desc">No universal standard exists. Every vendor ships unique structures that change without notice.</p>
-      </div>
-      <div class="hp-card">
-        <div class="hp-eyebrow">Hard Problem #2</div>
-        <h3 class="hp-title">Silent Breakages</h3>
-        <p class="hp-desc">200 OK responses with modified schemas cause downstream dashboards to silently fail.</p>
-      </div>
-      <div class="hp-card">
-        <div class="hp-eyebrow">Hard Problem #3</div>
-        <h3 class="hp-title">Cost Transparency</h3>
-        <p class="hp-desc">A single missed field change can miscalculate thousands of dollars in vendor spend.</p>
-      </div>
+    <!-- Table -->
+    <div class="table-wrapper">
+      <table class="dash-table" id="dash-table">
+        <thead>
+          <tr>
+            <th>Vendor</th>
+            <th>Endpoint</th>
+            <th>Status</th>
+            <th>Last Polled</th>
+            <th>Polls</th>
+            <th>Drifts</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody id="dash-tbody">
+          <tr><td colspan="7" style="text-align: center; padding: 32px;">Loading data...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════
-     FOOTER
-════════════════════════════════════════════════ -->
-<footer class="footer-v2">
+<!-- PLAYGROUND -->
+<section class="section playground-section" id="playground">
   <div class="container">
-
-    <div class="footer-top">
-      <div class="footer-brand">
-        <div class="nav-logo" style="margin-bottom:10px">
-          <span class="logo-icon">◈</span>
-          <span class="logo-text">drift<span class="logo-accent">-watch</span></span>
+    <div class="section-eyebrow">Interactive</div>
+    <h2 class="section-title">Test the Diff Engine</h2>
+    <div class="pg-grid">
+      <div class="pg-col">
+        <div class="pg-label-row">
+          <span class="pg-lbl">Baseline JSON</span>
+          <button class="btn-text" onclick="fillPlaygroundExample()">Load Example</button>
         </div>
-        <p class="footer-brand-desc">
-          Structural drift detector for AI vendor API responses.
-          Catches silent schema changes before your parsers silently break.
-        </p>
-        <div class="footer-built-for">
-          Built specifically to solve
-          <a href="https://www.oximy.com" target="_blank" rel="noopener" class="footer-oximy-link">Oximy</a>'s
-          hard problems in AI cost visibility.
-          <span class="footer-yc-badge">YC W26</span>
+        <textarea id="pg-before" class="pg-textarea"></textarea>
+      </div>
+      <div class="pg-col">
+        <div class="pg-label-row">
+          <span class="pg-lbl">Current JSON</span>
         </div>
-      </div>
-
-      <div class="footer-links-col">
-        <div class="footer-col-title">Run It</div>
-        <div class="footer-cmd"><code>pip install -r requirements.txt</code></div>
-        <div class="footer-cmd"><code>python -m api.server</code></div>
-        <div class="footer-cmd"><code>python main.py</code></div>
-        <div class="footer-cmd"><code>pytest tests/ -v</code></div>
-      </div>
-
-      <div class="footer-links-col">
-        <div class="footer-col-title">API Endpoints</div>
-        <div class="footer-ep"><code>GET /</code><span>Dashboard</span></div>
-        <div class="footer-ep"><code>GET /api/report</code><span>Full drift report</span></div>
-        <div class="footer-ep"><code>GET /api/vendor/{name}</code><span>Single vendor</span></div>
-        <div class="footer-ep"><code>GET /api/health</code><span>Liveness probe</span></div>
-      </div>
-
-      <div class="footer-links-col">
-        <div class="footer-col-title">Vendors Covered</div>
-        <div class="footer-vendor-list">
-          <div class="fv-item"><span class="fv-dot critical"></span>Groq — Live polling</div>
-          <div class="fv-item"><span class="fv-dot critical"></span>Cohere — Live polling</div>
-          <div class="fv-item"><span class="fv-dot critical"></span>Gemini — Live polling</div>
-        </div>
+        <textarea id="pg-after" class="pg-textarea"></textarea>
       </div>
     </div>
-
-    <div class="footer-bottom">
-      <div class="footer-bottom-left">
-        <span>Python · FastAPI · Rich · pytest</span>
-        <span class="footer-dot">·</span>
-        <span>Zero external deps in core</span>
-        <span class="footer-dot">·</span>
-        <span>CI/CD ready (exit code 1 on drift)</span>
-      </div>
-      <div class="footer-bottom-right">
-        Built for
-        <a href="https://www.oximy.com" target="_blank" rel="noopener" class="footer-oximy-link">Oximy</a>
-        ·
-        <span style="color:var(--text-muted)">Founded by Naman Ambavi</span>
-        ·
-        <span class="footer-yc-badge">YC W26</span>
-      </div>
+    <div class="pg-actions">
+      <button class="btn-primary" id="btn-run-diff" onclick="runPlaygroundDiff()">Run Diff</button>
+      <span id="pg-error" class="pg-error"></span>
     </div>
+    <div id="pg-results" class="pg-results hidden"></div>
+  </div>
+</section>
 
+<!-- CASE STUDY -->
+<section class="section case-study-section" id="case-study">
+  <div class="container cs-container">
+    <div class="section-eyebrow">Case Study</div>
+    <h2 class="section-title">Originally Built for Oximy's Cost Visibility Problem</h2>
+    
+    <div class="cs-content">
+      <h3>Context</h3>
+      <p>
+        Oximy (YC W26) tracks enterprise AI adoption across more than 6,500 tools. The core promise to the enterprise is simple but monumental: exact visibility into AI spend and ROI.
+      </p>
+
+      <h3>The Problem</h3>
+      <p>
+        Fulfilling that promise requires ingesting data from thousands of different APIs. There is no standard for how AI vendors report usage. One vendor might place cost under a <code>usage.cost</code> float. Another places it in <code>billing</code>. Crucially, vendors change these structures without warning. If an endpoint continues returning a 200 OK but silently drops or renames the cost field, downstream pipelines don't crash — they simply report $0.00 spent. This silent corruption destroys data integrity.
+      </p>
+
+      <h3>The Mechanism</h3>
+      <p>
+        drift-watch was built to catch exactly this. By recursively flattening the JSON payload into a strict dot-path-to-type map, it creates a structural signature (the "Shape Hash"). On every poll, it diffs the current shape against the expected baseline. If a field like <code>usage.cost</code> is missing, or changes from a float to a string, the engine instantly flags it as a Critical Drift and exits with a non-zero code to gate the CI/CD pipeline.
+      </p>
+
+      <p class="cs-closing">
+        It's a zero-dependency safeguard against silent schema mutations. <a href="#dashboard" class="cs-link">See it running live ↑</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container footer-container">
+    <div class="footer-left">
+      <div class="footer-logo">drift-watch</div>
+      <p class="footer-desc">Structural drift detector for AI vendor API responses.</p>
+    </div>
+    <div class="footer-right">
+      <a href="https://github.com/codeharsh27/drift-watch" class="footer-link">GitHub Repo</a>
+    </div>
   </div>
 </footer>
 
