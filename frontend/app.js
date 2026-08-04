@@ -124,6 +124,9 @@ function vendorCard(v, idx) {
       <div>
         <div class="vc-name">${esc(v.name)}</div>
         <div class="vc-desc">${esc(v.description || '')}</div>
+        ${v.stats ? `<div class="vc-stats" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+          🟢 Monitoring since ${fmtTime(v.stats.since)} | ${v.stats.polls} polls | ${v.stats.drifts_caught} drifts caught
+        </div>` : ''}
       </div>
       <span class="bdg ${hasDrift ? 'bdg-drift' : 'bdg-clean'}">
         ${hasDrift ? '⚠ DRIFT' : '✓ CLEAN'}

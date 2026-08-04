@@ -1,16 +1,11 @@
 """
 core/reporter.py
 ----------------
-Generates structured JSON reports from all configured vendor fixture pairs.
-
-Used by both:
-  - main.py     (CLI rich output)
-  - api/server.py  (REST API JSON responses)
+Generates structured JSON reports from live polled data.
 
 Public API:
-  - run_full_report()        → full report dict for all vendors
-  - run_vendor_report(v)     → single-vendor report dict
-  - VENDORS                  → list of vendor config dicts
+  - run_full_report()        → full report dict for all polled vendors
+  - run_vendor_report(name)  → single-vendor report dict
 """
 
 from __future__ import annotations
@@ -19,104 +14,80 @@ import json
 import pathlib
 from datetime import datetime, timezone
 
-from core.differ import compare_shapes
-
 ROOT     = pathlib.Path(__file__).resolve().parent.parent
-FIXTURES = ROOT / "fixtures"
+DATA_DIR = ROOT / "data"
 
-# ---------------------------------------------------------------------------
-# Vendor registry — add new vendors here without touching anything else
-# ---------------------------------------------------------------------------
+def _load(vendor_name: str) -> dict:
+    """Load and parse a JSON data file for a vendor."""
+    file_path = DATA_DIR / f"{vendor_name.lower()}.json"
+    if not file_path.exists():
+        return {}
+    return json.loads(file_path.read_text(encoding="utf-8"))
 
-VENDORS: list[dict] = [
-    {
-        "name":        "OpenAI",
-        "description": "GPT-4 chat completion API",
-        "before":      "openai_before.json",
-        "after":       "openai_after.json",
-    },
-    {
-        "name":        "Claude",
-        "description": "Anthropic Messages API",
-        "before":      "claude_before.json",
-        "after":       "claude_after.json",
-    },
-    {
-        "name":        "Cursor",
-        "description": "Cursor code-assistant API",
-        "before":      "cursor_before.json",
-        "after":       "cursor_after.json",
-    },
-]
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def _load(filename: str) -> dict:
-    """Load and parse a JSON fixture file."""
-    return json.loads((FIXTURES / filename).read_text(encoding="utf-8"))
-
-
-# ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
-
-def run_vendor_report(vendor: dict) -> dict:
-    """Run drift comparison for a single vendor and return a structured report.
-
-    Args:
-        vendor: A dict from the VENDORS list with keys:
-                name, description, before, after.
-
-    Returns:
-        A dict merging vendor metadata with the compare_shapes result::
-
-            {
-              "name":         "OpenAI",
-              "description":  "GPT-4 chat completion API",
-              "has_drift":    True,
-              "drift_score":  60,
-              "removed":      [...],
-              "added":        [...],
-              "type_changed": [...],
-              "detected_at":  "2026-07-24T17:10:00+00:00",
+def run_vendor_report(vendor_name: str) -> dict:
+    """Return the latest drift report for a single vendor from live data."""
+    data = _load(vendor_name)
+    if not data:
+        return {
+            "name": vendor_name,
+            "description": "No live data available yet.",
+            "has_drift": False,
+            "drift_score": 0,
+            "removed": [],
+            "added": [],
+            "type_changed": [],
+            "detected_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+    history = data.get("history", [])
+    if not history:
+        return {
+            "name": data["name"],
+            "description": data.get("description", ""),
+            "has_drift": False,
+            "drift_score": 0,
+            "removed": [],
+            "added": [],
+            "type_changed": [],
+            "detected_at": datetime.now(timezone.utc).isoformat(),
+            "stats": {
+                "polls": 0,
+                "drifts_caught": 0,
+                "since": datetime.now(timezone.utc).isoformat()
             }
-    """
-    before = _load(vendor["before"])
-    after  = _load(vendor["after"])
-    result = compare_shapes(before, after)
+        }
+        
+    latest = history[-1]
+    drifts_caught = sum(1 for h in history if h.get("has_drift"))
+    
     return {
-        "name":        vendor["name"],
-        "description": vendor["description"],
-        **result,
+        "name": data["name"],
+        "description": data.get("description", ""),
+        "has_drift": latest.get("has_drift", False),
+        "drift_score": latest.get("drift_score", 0),
+        "removed": latest.get("removed", []),
+        "added": latest.get("added", []),
+        "type_changed": latest.get("type_changed", []),
+        "detected_at": latest.get("timestamp", datetime.now(timezone.utc).isoformat()),
+        "stats": {
+            "polls": len(history),
+            "drifts_caught": drifts_caught,
+            "since": history[0].get("timestamp", datetime.now(timezone.utc).isoformat())
+        }
     }
 
-
 def run_full_report() -> dict:
-    """Generate a complete drift report for all registered vendors.
+    """Generate a complete drift report reading from all live data files."""
+    vendor_reports = []
+    
+    if DATA_DIR.exists():
+        for file_path in DATA_DIR.glob("*.json"):
+            # Exclude anything that isn't a vendor file if needed
+            vendor_name = file_path.stem
+            report = run_vendor_report(vendor_name)
+            if report.get("name"): # ensure valid
+                vendor_reports.append(report)
 
-    Returns:
-        A dict with three keys:
-
-        - ``"generated_at"`` : ISO-8601 UTC timestamp for this run
-        - ``"summary"``      : aggregate stats across all vendors
-        - ``"vendors"``      : list of per-vendor report dicts
-
-    Example::
-
-        {
-          "generated_at": "2026-07-24T17:10:00+00:00",
-          "summary": {
-            "total_vendors":     3,
-            "vendors_with_drift": 3,
-            "overall_status":    "CRITICAL"
-          },
-          "vendors": [...]
-        }
-    """
-    vendor_reports = [run_vendor_report(v) for v in VENDORS]
     vendors_with_drift = sum(1 for v in vendor_reports if v["has_drift"])
 
     return {

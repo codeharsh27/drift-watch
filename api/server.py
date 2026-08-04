@@ -33,7 +33,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Any
 
-from core.reporter import VENDORS, run_full_report, run_vendor_report
+from core.reporter import run_full_report, run_vendor_report, _load as load_vendor_data
 from core.differ import compare_shapes
 
 # ---------------------------------------------------------------------------
@@ -87,32 +87,35 @@ async def health() -> dict:
 
 @app.get("/api/report", tags=["drift"])
 async def get_report() -> dict:
-    """Return a full drift report for every registered vendor.
-
-    The response contains a top-level ``summary`` and a ``vendors`` list,
-    each entry carrying ``removed``, ``added``, ``type_changed``,
-    ``has_drift``, and ``drift_score`` (0-100).
-    """
+    """Return a full drift report for every registered vendor."""
     return run_full_report()
 
 
 @app.get("/api/vendor/{name}", tags=["drift"])
 async def get_vendor(name: str) -> dict:
-    """Return a drift report for a single vendor by name (case-insensitive).
-
-    Example: GET /api/vendor/openai
-    """
-    vendor = next(
-        (v for v in VENDORS if v["name"].lower() == name.lower()),
-        None,
-    )
-    if vendor is None:
-        known = [v["name"] for v in VENDORS]
+    """Return a drift report for a single vendor by name (case-insensitive)."""
+    report = run_vendor_report(name)
+    if not report or not report.get("name"):
         raise HTTPException(
             status_code=404,
-            detail=f"Vendor '{name}' not found. Known vendors: {known}",
+            detail=f"Vendor '{name}' not found."
         )
-    return run_vendor_report(vendor)
+    return report
+
+@app.get("/api/history/{name}", tags=["drift"])
+async def get_history(name: str) -> dict:
+    """Return the full history of a vendor."""
+    data = load_vendor_data(name)
+    if not data:
+         raise HTTPException(
+            status_code=404,
+            detail=f"Vendor '{name}' not found."
+        )
+    return {
+        "name": data["name"],
+        "history": data.get("history", [])
+    }
+
 
 
 class DiffRequest(BaseModel):
