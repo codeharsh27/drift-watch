@@ -41,10 +41,16 @@ function fmtTime(iso) {
 // ─── SUMMARY STRIP ────────────────────────────────────────────
 function renderSummary(data) {
   const { summary } = data;
-
   $('s-total').textContent   = summary.total_vendors;
   $('s-drifted').textContent = summary.vendors_with_drift;
   $('s-time').textContent    = fmtTime(data.generated_at);
+  $('s-status').textContent  = summary.overall_status;
+
+  // Also update hero stats
+  const heroTotal = $('hero-stat-total');
+  const heroDrift = $('hero-stat-drift');
+  if (heroTotal) heroTotal.textContent = summary.total_vendors;
+  if (heroDrift) heroDrift.textContent = summary.vendors_with_drift;
 
   const el = $('s-status');
   if (summary.overall_status === 'CRITICAL') {

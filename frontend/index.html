@@ -56,19 +56,36 @@
 
     <div class="hero-stats">
       <div class="stat-chip">
-        <span class="stat-val">3</span>
+        <span class="stat-val" id="hero-stat-total">3</span>
         <span class="stat-label">Vendors Monitored</span>
       </div>
       <div class="stat-sep"></div>
       <div class="stat-chip">
-        <span class="stat-val">3</span>
-        <span class="stat-label">Drift Types Detected</span>
+        <span class="stat-val" id="hero-stat-drift">3</span>
+        <span class="stat-label">Vendors with Drift</span>
       </div>
       <div class="stat-sep"></div>
       <div class="stat-chip">
-        <span class="stat-val">0</span>
+        <span class="stat-val" id="hero-stat-false">0</span>
         <span class="stat-label">False Positives</span>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     BUILT BY
+════════════════════════════════════════════════ -->
+<section class="section built-by-section" style="padding: 40px 0; border-bottom: 1px solid var(--border-color); background: var(--bg-card);">
+  <div class="container" style="text-align: center;">
+    <div style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 12px;">The Creator</div>
+    <h3 style="margin-bottom: 8px; font-size: 1.5rem;">Built by <span style="color: var(--text-primary);">CodeHarsh</span></h3>
+    <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto 16px; line-height: 1.5;">
+      Full-stack engineer (Flutter / Python / Node / Postgres) moving into AI product work. Built to demonstrate a real infrastructure problem I noticed in AI-vendor-dependent products — currently monitoring live providers below.
+    </p>
+    <div>
+      <a href="https://github.com/codeharsh27" target="_blank" rel="noopener" class="btn-ghost" style="padding: 6px 12px; font-size: 0.9rem; border-radius: 4px; margin: 0 4px;">GitHub</a>
+      <a href="https://linkedin.com/in/codeharsh27" target="_blank" rel="noopener" class="btn-ghost" style="padding: 6px 12px; font-size: 0.9rem; border-radius: 4px; margin: 0 4px;">LinkedIn</a>
     </div>
   </div>
 </section>
@@ -366,11 +383,11 @@
 ════════════════════════════════════════════════ -->
 <section class="section oximy-section" id="oximy">
   <div class="container">
-    <div class="section-tag">Built for Oximy · YC W26</div>
-    <h2 class="section-title">Why this matters for Oximy</h2>
+    <div class="section-tag">Case Study: Oximy (YC W26)</div>
+    <h2 class="section-title">Originally Built for Oximy's Cost Visibility Problem</h2>
     <p class="section-desc">
       Oximy tracks 6,500+ tools to prove enterprise AI ROI. 
-      Silent schema changes across thousands of undocumented APIs destroy data integrity.
+      Silent schema changes across thousands of undocumented APIs can destroy their data integrity. This project was built to solve their specific version of this problem.
     </p>
     
     <div class="hp-grid">
@@ -436,9 +453,9 @@
       <div class="footer-links-col">
         <div class="footer-col-title">Vendors Covered</div>
         <div class="footer-vendor-list">
-          <div class="fv-item"><span class="fv-dot critical"></span>OpenAI — cost moved to billing object</div>
-          <div class="fv-item"><span class="fv-dot critical"></span>Claude — cost_usd silently removed</div>
-          <div class="fv-item"><span class="fv-dot critical"></span>Cursor — float changed to string</div>
+          <div class="fv-item"><span class="fv-dot critical"></span>Groq — Live polling</div>
+          <div class="fv-item"><span class="fv-dot critical"></span>Cohere — Live polling</div>
+          <div class="fv-item"><span class="fv-dot critical"></span>Gemini — Live polling</div>
         </div>
       </div>
     </div>

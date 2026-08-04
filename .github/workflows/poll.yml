@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: '0 */4 * * *' # Every 4 hours
   workflow_dispatch: # Allow manual triggers
+  push:
+    branches:
+      - main
 
 jobs:
   poll:
