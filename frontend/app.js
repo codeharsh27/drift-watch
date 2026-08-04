@@ -1,5 +1,5 @@
 /**
- * app.js — drift-watch redesigned logic
+ * app.js — drift-watch minimalist dashboard logic
  */
 
 'use strict';
@@ -23,28 +23,6 @@ function fmtTime(iso) {
   } catch { return iso || '—'; }
 }
 
-// Flat shape generator for JS (to mimic Python backend for Step 2 visual)
-function getShape(obj, prefix = '') {
-  let shape = {};
-  if (obj === null) return { [prefix || 'root']: 'NoneType' };
-  
-  if (Array.isArray(obj)) {
-    shape[prefix || 'root'] = 'list';
-    if (obj.length > 0) {
-      Object.assign(shape, getShape(obj[0], prefix));
-    }
-  } else if (typeof obj === 'object') {
-    shape[prefix || 'root'] = 'dict';
-    for (const [k, v] of Object.entries(obj)) {
-      const newKey = prefix ? `${prefix}.${k}` : k;
-      Object.assign(shape, getShape(v, newKey));
-    }
-  } else {
-    shape[prefix || 'root'] = typeof obj;
-  }
-  return shape;
-}
-
 // --- RENDERERS ---
 
 function renderHeroWidget(vendors) {
@@ -55,44 +33,10 @@ function renderHeroWidget(vendors) {
     const dotColor = v.has_drift ? 'red' : 'green';
     return `<div class="live-pill">
       <span class="dot ${dotColor}"></span>
-      ${esc(v.name)}
-      <span style="color:var(--text-muted);font-size:0.75rem;margin-left:8px;">${fmtTime(v.detected_at)}</span>
+      <strong>${esc(v.name)}</strong>
+      <span style="color:var(--text-muted);font-size:0.75rem;margin-left:4px;">Polled ${fmtTime(v.detected_at)}</span>
     </div>`;
   }).join('');
-}
-
-function renderPipelineSteps(vendor) {
-  if (!vendor) return;
-  
-  const step1 = $('pipeline-step1');
-  const step2 = $('pipeline-step2');
-  const step3 = $('pipeline-step3');
-  const step4Vendor = $('pipeline-step4-vendor');
-  
-  if (step1 && vendor.baseline) {
-    step1.textContent = JSON.stringify(vendor.baseline, null, 2);
-  } else if (step1) {
-    step1.textContent = "{\n  // Awaiting first poll data\n}";
-  }
-  
-  if (step2 && vendor.baseline) {
-    step2.textContent = JSON.stringify(getShape(vendor.baseline), null, 2);
-  }
-  
-  if (step3) {
-    const diff = {
-      removed: vendor.removed,
-      added: vendor.added,
-      type_changed: vendor.type_changed,
-      has_drift: vendor.has_drift,
-      drift_score: vendor.drift_score
-    };
-    step3.textContent = JSON.stringify(diff, null, 2);
-  }
-  
-  if (step4Vendor) {
-    step4Vendor.textContent = vendor.name;
-  }
 }
 
 function renderDashboardTable(data) {
@@ -107,7 +51,6 @@ function renderDashboardTable(data) {
     const dotClass = v.has_drift ? 'red' : 'green';
     const polls = v.stats ? v.stats.polls : 0;
     const drifts = v.stats ? v.stats.drifts_caught : 0;
-    
     const badgeClass = v.has_drift ? 'drifted' : 'healthy';
     
     return `
@@ -150,9 +93,6 @@ async function runScan() {
     if (data && data.vendors) {
       renderHeroWidget(data.vendors);
       renderDashboardTable(data);
-      if (data.vendors.length > 0) {
-        renderPipelineSteps(data.vendors[0]);
-      }
     }
   } catch (err) {
     console.error('[drift-watch] Fetch failed:', err);
@@ -162,7 +102,7 @@ async function runScan() {
     if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:red;">Error fetching data</td></tr>`;
   } finally {
     if (btn) {
-      btn.textContent = "Refresh Data";
+      btn.textContent = "Refresh Live Feed";
       btn.disabled = false;
     }
   }
@@ -247,7 +187,7 @@ async function runPlaygroundDiff() {
     console.error('[drift-watch] Playground failed:', err);
     errEl.textContent = 'API Error';
   } finally {
-    btn.textContent = "Run Diff";
+    btn.textContent = "Evaluate Diff";
     btn.disabled = false;
   }
 }
