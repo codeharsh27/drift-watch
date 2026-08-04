@@ -69,15 +69,14 @@ function renderPipelineSteps(vendor) {
   const step3 = $('pipeline-step3');
   const step4Vendor = $('pipeline-step4-vendor');
   
-  if (step1 && vendor.history && vendor.history.length > 0) {
-    // Show the actual shape keys from the backend baseline
-    step1.textContent = JSON.stringify(vendor.history[0].shape || { "status": "unknown" }, null, 2);
+  if (step1 && vendor.baseline) {
+    step1.textContent = JSON.stringify(vendor.baseline, null, 2);
   } else if (step1) {
     step1.textContent = "{\n  // Awaiting first poll data\n}";
   }
   
-  if (step2 && vendor.history && vendor.history.length > 0) {
-    step2.textContent = JSON.stringify(vendor.history[0].shape, null, 2);
+  if (step2 && vendor.baseline) {
+    step2.textContent = JSON.stringify(getShape(vendor.baseline), null, 2);
   }
   
   if (step3) {
@@ -109,13 +108,15 @@ function renderDashboardTable(data) {
     const polls = v.stats ? v.stats.polls : 0;
     const drifts = v.stats ? v.stats.drifts_caught : 0;
     
+    const badgeClass = v.has_drift ? 'drifted' : 'healthy';
+    
     return `
       <tr>
         <td data-label="Vendor"><strong>${esc(v.name)}</strong></td>
         <td data-label="Endpoint"><span style="font-family:monospace;font-size:0.85rem;color:var(--text-muted);">${esc(v.description.replace('Live polling from ', ''))}</span></td>
         <td data-label="Status">
-          <div class="status-badge">
-            <span class="dot ${dotClass}"></span>
+          <div class="status-badge ${badgeClass}">
+            <span class="dot ${dotClass}" style="background-color: currentColor"></span>
             ${statusText}
           </div>
         </td>

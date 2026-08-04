@@ -69,6 +69,7 @@ def run_vendor_report(vendor_name: str) -> dict:
         "added": latest.get("added", []),
         "type_changed": latest.get("type_changed", []),
         "detected_at": latest.get("timestamp", datetime.now(timezone.utc).isoformat()),
+        "baseline": data.get("baseline", {}),
         "stats": {
             "polls": len(history),
             "drifts_caught": drifts_caught,
