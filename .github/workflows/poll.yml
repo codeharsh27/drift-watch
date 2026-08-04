@@ -11,6 +11,8 @@ on:
 jobs:
   poll:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,6 +26,8 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run poller
+        id: poller
+        continue-on-error: true
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
@@ -44,3 +48,9 @@ jobs:
             git commit -m "Update drift history [skip ci]"
             git push
           fi
+
+      - name: Check poller status
+        if: steps.poller.outcome == 'failure'
+        run: |
+          echo "Poller detected critical drift. Failing the workflow for CI visibility."
+          exit 1

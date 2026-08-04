@@ -43,9 +43,9 @@ pytest tests/ -v
 
 | Vendor | Drift Scenario Simulated |
 |--------|--------------------------|
-| OpenAI | `usage.cost` moved to `billing.cost` — silently unreachable |
-| Claude | `usage.cost_usd` silently removed entirely |
-| Cursor | `cost` type changed `float → string`; `tokens_used` renamed `token_count` |
+| Groq | Live Polling |
+| Cohere | Live Polling |
+| Gemini | Live Polling |
 
 ---
 
