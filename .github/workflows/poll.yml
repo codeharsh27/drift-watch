@@ -50,7 +50,10 @@ jobs:
           fi
 
       - name: Check poller status
-        if: steps.poller.outcome == 'failure'
         run: |
-          echo "Poller detected critical drift. Failing the workflow for CI visibility."
-          exit 1
+          if grep -q '"has_drift": true' data/*.json; then
+            echo "Poller detected critical drift. Failing the workflow for CI visibility."
+            exit 1
+          else
+            echo "No drift detected."
+          fi
