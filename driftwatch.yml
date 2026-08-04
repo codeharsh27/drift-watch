@@ -1,0 +1,25 @@
+# driftwatch.yml
+# Declarative schema drift monitoring configuration for AI vendor endpoints
+
+version: "1"
+
+targets:
+  - name: Cohere Models
+    url: https://api.cohere.com/v1/models
+    method: GET
+    headers:
+      Authorization: Bearer ${COHERE_API_KEY}
+    baseline: data/cohere.json
+
+  - name: Gemini Models
+    url: https://generativelanguage.googleapis.com/v1beta/models
+    method: GET
+    headers:
+      x-goog-api-key: ${GEMINI_API_KEY}
+    baseline: data/gemini.json
+
+  - name: Groq Models
+    url: https://api.groq.com/openai/v1/models
+    method: GET
+    headers:
+      Authorization: Bearer ${GROQ_API_KEY}

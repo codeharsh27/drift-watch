@@ -1,0 +1,28 @@
+# Example reusable CI workflow for teams integrating drift-watch
+name: Schema Drift Guard
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Every 6 hours
+  workflow_dispatch:
+
+jobs:
+  drift-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install drift-watch
+        run: pip install drift-watch
+
+      - name: Run Schema Drift Check
+        env:
+          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: driftwatch check --config driftwatch.yml

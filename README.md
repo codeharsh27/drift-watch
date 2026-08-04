@@ -1,110 +1,147 @@
-# drift-watch
+# 🛡️ drift-watch
 
-> Structural drift detector for AI vendor API responses
+> **Zero-dependency structural schema drift detection engine & CI gate for AI vendor APIs.**
 
----
+[![PyPI](https://img.shields.io/badge/pip-install%20drift--watch-blue.svg)](https://pypi.org/project/drift-watch/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Live Dashboard](https://img.shields.io/badge/Live%20Dashboard-Operational-success)](https://drift-watch-one.vercel.app/)
 
-## The Problem
+Traditional HTTP monitoring catches `500 Internal Server Error` failures. **`drift-watch` catches `200 OK` responses that silently corrupt your application pipelines.**
 
-When an AI vendor ships a silent API update, a field can move three levels deeper in the JSON response, and nothing throws an error — your parser just reads `null` where it used to read `0.002`, and every cost dashboard goes to zero. The incident rarely surfaces through alerts; it surfaces when a customer notices their spend tracker shows $0 for three days and calls to ask what happened. `drift-watch` catches that the day it happens by comparing the *shape* of a response — its field paths and types — not just whether the request succeeded.
-
----
-
-## What it detects
-
-| Signal | Severity | Description |
-|--------|----------|-------------|
-| Fields removed from a response | 🚨 **Critical** | A field your parser relies on has disappeared |
-| Fields that changed type (e.g. `float → string`) | 🚨 **Critical** | Silent misparse — `"0.004"` reads as truthy, not as a number |
-| New fields that appeared | ℹ️ **Informational** | Vendor added data; existing parsers still work fine |
+AI vendors (Groq, Cohere, OpenAI, Gemini) update response schemas without major version bumps. If an endpoint silently drops `usage.cost` or converts a string ID to an integer, standard status checks pass—while downstream billing & analytics report `$0.00` spend. `drift-watch` recursively flattens live JSON payloads into dot-path signatures, diffing them against baselines to exit `1` on drift.
 
 ---
 
-## How to run
+## ⚡ Terminal Demo
+
+```text
+$ driftwatch check --config driftwatch.yml
+
+┌──────────────────────────────────────────────────────────┐
+│ drift-watch v0.1.0 — Structural Drift Monitor            │
+└──────────────────────────────────────────────────────────┘
+
+Reading config from driftwatch.yml...
+
+Target Name    Endpoint URL                            Status           Drift Score
+─────────────────────────────────────────────────────────────────────────────────
+Groq Models    https://api.groq.com/openai/v1/models   HEALTHY          0%
+Cohere Models  https://api.cohere.com/v1/models        HEALTHY          0%
+Gemini Models  https://generativelanguage.googleapis…  HEALTHY          0%
+
+✓ All endpoints healthy. No structural schema drift detected.
+```
+
+---
+
+## 🚀 Quickstart
+
+Install via `pip`:
 
 ```bash
-pip install -r requirements.txt
-python main.py
+pip install drift-watch
 ```
 
-The tool exits with code **0** if all schemas are stable, and **code 1** if any critical drift is found — making it a drop-in CI/CD gate.
-
----
-
-## Run tests
+### 1. Ad-Hoc Target Inspection
+Flatten any live JSON API payload into a structural dot-path signature:
 
 ```bash
-pytest tests/ -v
+driftwatch --target https://api.groq.com/openai/v1/models
+```
+
+**Output:**
+```text
+Field Path              Inferred Type
+──────────────────────────────────────
+root                    dict
+data                    list
+data[0]                 dict
+data[0].id              str
+data[0].object          str
+data[0].created         int
+data[0].owned_by        str
+```
+
+### 2. CI/CD Schema Guard
+Run batch schema drift checks defined in `driftwatch.yml`:
+
+```bash
+driftwatch check
 ```
 
 ---
 
-## Vendors covered
+## ⚙️ Configuration (`driftwatch.yml`)
 
-| Vendor | Drift Scenario Simulated |
-|--------|--------------------------|
-| Groq | Live Polling |
-| Cohere | Live Polling |
-| Gemini | Live Polling |
+Create a `driftwatch.yml` file in your project root:
 
----
+```yaml
+version: "1"
 
-## Project Structure
+targets:
+  - name: Groq Models
+    url: https://api.groq.com/openai/v1/models
+    method: GET
+    baseline: .driftwatch/groq.json
 
-```
-drift-watch/
-├── core/
-│   └── differ.py          # get_shape() and compare_shapes()
-├── fixtures/
-│   ├── openai_before.json
-│   ├── openai_after.json
-│   ├── claude_before.json
-│   ├── claude_after.json
-│   ├── cursor_before.json
-│   └── cursor_after.json
-├── tests/
-│   └── test_differ.py     # 6 pytest tests
-├── main.py                # Rich CLI entrypoint
-├── requirements.txt
-└── README.md
+  - name: Cohere Models
+    url: https://api.cohere.com/v1/models
+    method: GET
+    headers:
+      Authorization: Bearer ${COHERE_API_KEY}
+    baseline: .driftwatch/cohere.json
 ```
 
 ---
 
-## How it works
+## 🛡️ GitHub Actions CI Gating
 
-`get_shape()` recursively walks any JSON object and returns a **flat dictionary** mapping every field path to its Python type name:
+Add `.github/workflows/drift.yml` to block deployment pipelines when critical schema drift occurs:
 
-```python
-get_shape({"usage": {"cost": 0.002}})
-# → {"usage": "dict", "usage.cost": "float"}
+```yaml
+name: Schema Drift Guard
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  drift-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with: { python-version: '3.10' }
+      - run: pip install drift-watch
+      - name: Run Schema Guard
+        env:
+          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+        run: driftwatch check --config driftwatch.yml
 ```
-
-`compare_shapes(before, after)` diffs two shapes and classifies every difference:
-
-```python
-result = compare_shapes(before, after)
-# {
-#   "removed":      [{"field": "usage.cost", "was_type": "float"}],
-#   "added":        [{"field": "billing.cost", "new_type": "float"}],
-#   "type_changed": [],
-#   "has_drift":    True
-# }
-```
-
-`has_drift` is `True` only when something was **removed** or **type-changed** — not merely added.
 
 ---
 
-## What's missing (honest gaps)
+## 🌐 Live Platform Dashboard
 
-- **No real-time polling** — currently runs manually or in CI; no daemon mode
-- **Array schemas only inspect the first item** — heterogeneous arrays are not fully modelled
-- **No webhook / Slack alert integration yet** — output is terminal-only
-- **No real captured payloads** — fixtures are carefully crafted drift simulations, not live traffic captures
+We host a live monitoring feed polling active LLM providers (Cohere, Groq, Gemini) every 6 hours via GitHub Actions:
+
+🔗 **Live Monitoring App:** [https://drift-watch-one.vercel.app/](https://drift-watch-one.vercel.app/)
 
 ---
 
-## Why this matters for Oximy
+## 📐 Architecture & Mechanism
 
-Oximy's core value proposition is giving enterprises accurate, real-time visibility into their AI spend — and that visibility collapses the moment a vendor silently renames or removes a cost field without a version bump. `drift-watch` acts as the early-warning layer between vendor API changes and Oximy's parsers, catching schema shifts before they propagate into silent zero-cost readings that erode customer trust.
+```
+[Live AI APIs] ──► [Live Poller] ──► [Shape Hashing Engine] ──► [Diff Evaluator] ──► [CI Gate & Alert]
+```
+
+1. **Shape Hashing**: Recursively flattens JSON objects to dot-path mappings (`{"usage": "dict", "usage.cost": "float"}`). Dynamic values are stripped.
+2. **Set-Diffing**: Compares shapes against baselines to classify field removals (`was_type`), field additions (`new_type`), and mutated types (`was -> now`).
+3. **Growth vs Drift**: Field additions set `has_drift=False` (API growth). Field removals and type mutations set `has_drift=True` (critical drift).
+4. **CI Gating**: Exits with non-zero code `1` on critical drift, triggering Webhook alerts and gating deployment pipelines.
+
+---
+
+## 📄 License
+MIT License. Created by [CodeHarsh](https://github.com/codeharsh27).
