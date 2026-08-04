@@ -15,6 +15,19 @@ function esc(str) {
     .replace(/"/g, '&quot;');
 }
 
+function copyPipCommand() {
+  const codeText = "pip install drift-watch";
+  navigator.clipboard.writeText(codeText).then(() => {
+    const txt = document.getElementById("copy-text");
+    if (txt) {
+      txt.textContent = "Copied!";
+      setTimeout(() => { txt.textContent = "Copy"; }, 2000);
+    }
+  }).catch(err => {
+    console.error("Copy failed", err);
+  });
+}
+
 function fmtTime(iso) {
   try {
     return new Date(iso).toLocaleTimeString('en-US', {

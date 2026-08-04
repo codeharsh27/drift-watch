@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>drift-watch — AI Vendor Schema Monitor</title>
-  <meta name="description" content="Catch silent API schema drift before it breaks your production application." />
+  <meta name="description" content="Zero-dependency structural drift detector and CI gate for AI vendor API endpoints." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -12,12 +12,20 @@
 </head>
 <body>
 
+<!-- TOP ANNOUNCEMENT BAR (LiteLLM Style) -->
+<div class="announcement-bar">
+  <div class="container announcement-container">
+    <span>Open source & zero-dependency. Now available on PyPI: <code>pip install drift-watch</code> &rarr;</span>
+    <a href="https://github.com/codeharsh27/drift-watch" target="_blank" rel="noopener" class="announcement-link">View on GitHub &rsaquo;</a>
+  </div>
+</div>
+
 <!-- NAVBAR -->
 <nav class="navbar" id="top">
   <div class="nav-container">
     <div class="nav-logo">
       <span class="logo-text">drift-watch</span>
-      <span class="logo-badge">PROD ENGINE</span>
+      <span class="logo-badge">PyPI v0.1.0</span>
     </div>
     
     <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation">
@@ -29,40 +37,122 @@
     </button>
     
     <div class="nav-links" id="nav-links">
-      <a href="#architecture" class="nav-link">Architecture</a>
-      <a href="#dashboard"    class="nav-link">Live Dashboard</a>
-      <a href="#playground"   class="nav-link">Sandbox</a>
-      <a href="#case-study"   class="nav-link">Case Study</a>
-      <a href="#dashboard"    class="btn-nav-cta">Live Monitor →</a>
+      <a href="#cli"           class="nav-link">CLI Tooling</a>
+      <a href="#architecture"  class="nav-link">Architecture</a>
+      <a href="#dashboard"     class="nav-link">Live Dashboard</a>
+      <a href="#playground"    class="nav-link">Sandbox</a>
+      <a href="#case-study"    class="nav-link">Case Study</a>
+      <a href="#cli"           class="btn-nav-cta">Install CLI →</a>
     </div>
   </div>
 </nav>
 
-<!-- HERO -->
+<!-- HERO SECTION (LiteLLM Ice-Blue Style) -->
 <section class="section hero" id="hero">
   <div class="container hero-container">
     <div class="hero-eyebrow-pills">
+      <span class="hero-badge hero-badge-purple">PyPI Package</span>
       <span class="hero-badge hero-badge-blue">Continuous Schema Monitoring</span>
-      <span class="hero-badge hero-badge-green">100% Real Live Vendor API Data</span>
+      <span class="hero-badge hero-badge-green">100% Real Live Vendors</span>
     </div>
     <h1 class="hero-title">Catch silent AI API schema drift before it breaks production.</h1>
     <p class="hero-sub">
       AI vendors change response payloads without major version bumps. <code>drift-watch</code> recursively flattens live JSON into structural dot-path signatures, diffing them to catch missing fields and mutated types instantly.
     </p>
+    
     <div class="hero-cta-wrap">
-      <a href="#dashboard" class="btn-primary">View Live Dashboard</a>
-      <a href="#architecture" class="btn-outline">Explore Pipeline Flow</a>
+      <a href="#cli" class="btn-primary">Install via PyPI</a>
+      <a href="#dashboard" class="btn-outline">View Live Dashboard</a>
       <a href="https://github.com/codeharsh27/drift-watch" target="_blank" rel="noopener" class="btn-outline">GitHub Repo</a>
     </div>
+
+    <!-- Quickstart Terminal Copy Pill -->
+    <div class="hero-pip-box card-shadow" onclick="copyPipCommand()">
+      <span class="pip-prompt">$</span>
+      <code id="pip-code">pip install drift-watch</code>
+      <button class="btn-copy" id="btn-copy-pip">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span id="copy-text">Copy</span>
+      </button>
+    </div>
     
-    <!-- Hero Live Widget -->
+    <!-- Hero Live Status Widget -->
     <div class="hero-widget card-shadow">
       <div class="hero-widget-header">
         <span class="hero-widget-label">Active Monitored Providers</span>
-        <span class="live-proof-tag"><span class="pulse-dot-sm"></span> LIVE PRODUCTION DATA</span>
+        <span class="live-proof-tag"><span class="pulse-dot-sm"></span> LIVE PRODUCTION FEED</span>
       </div>
       <div id="hero-live-widget" class="hero-live-pills">
         <span class="pill-loading">Loading live provider health...</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEVELOPER EXPERIENCE & CLI TOOLING (NEW) -->
+<section class="section cli-section" id="cli">
+  <div class="container">
+    <div class="section-eyebrow">Developer Tooling</div>
+    <h2 class="section-title">Built for Production Workflows: CLI & PyPI</h2>
+    <p class="section-subtitle">
+      Install globally via <code>pip</code>, run ad-hoc shape inspections, or add <code>driftwatch.yml</code> to gate your CI/CD deployment pipelines.
+    </p>
+
+    <div class="cli-grid">
+      <!-- Left: Feature Cards -->
+      <div class="cli-cards">
+        <!-- Card 1 -->
+        <div class="cli-card card-shadow">
+          <div class="cli-card-badge">01 / CLI EXECUTABLE</div>
+          <h3>Ad-Hoc Endpoint Inspection</h3>
+          <p>Flatten any live API payload into a clean dot-path structural type map directly from your terminal:</p>
+          <div class="cli-code-snippet"><code>$ driftwatch --target https://api.groq.com/openai/v1/models</code></div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="cli-card card-shadow">
+          <div class="cli-card-badge badge-blue">02 / DECLARATIVE SPEC</div>
+          <h3><code>driftwatch.yml</code> Configuration</h3>
+          <p>Define multi-vendor target endpoints, authorization headers, and baseline file paths in a single spec file.</p>
+          <div class="cli-code-snippet"><code>$ driftwatch check --config driftwatch.yml</code></div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="cli-card card-shadow">
+          <div class="cli-card-badge badge-green">03 / CI/CD GATING</div>
+          <h3>Automated Exit 1 Deploy Gate</h3>
+          <p>Integrates natively with GitHub Actions. Exits code <code>1</code> on breaking drift to prevent bad deploys.</p>
+          <div class="cli-code-snippet"><code>- run: driftwatch check</code></div>
+        </div>
+      </div>
+
+      <!-- Right: Dark Terminal Window Preview -->
+      <div class="cli-terminal-window card-shadow">
+        <div class="terminal-header">
+          <div class="term-dots">
+            <span class="tdot red"></span>
+            <span class="tdot yellow"></span>
+            <span class="tdot green"></span>
+          </div>
+          <span class="term-title">bash — driftwatch check</span>
+        </div>
+        <div class="terminal-body">
+<span class="t-prompt">$</span> driftwatch check --config driftwatch.yml
+
+<span class="t-panel">+-----------------------------------------------+
+| drift-watch v0.1.0 — Structural Drift Monitor |
++-----------------------------------------------+</span>
+Reading config from driftwatch.yml...
+
+<span class="t-head">Target Name    Endpoint URL                            Status       Drift</span>
+──────────────────────────────────────────────────────────────────────────
+Groq Models    https://api.groq.com/openai/v1/models   <span class="t-green">HEALTHY</span>      0%
+Cohere Models  https://api.cohere.com/v1/models        <span class="t-green">HEALTHY</span>      0%
+Gemini Models  https://generativelanguage.googleapis…  <span class="t-green">HEALTHY</span>      0%
+
+<span class="t-green">[OK] All endpoints healthy. No structural schema drift detected.</span>
+<span class="t-dim">Process finished with exit code 0</span>
+        </div>
       </div>
     </div>
   </div>
