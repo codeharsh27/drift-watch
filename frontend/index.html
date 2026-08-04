@@ -37,6 +37,7 @@
     </button>
     
     <div class="nav-links" id="nav-links">
+      <a href="#why"           class="nav-link">Why It Matters</a>
       <a href="#cli"           class="nav-link">CLI Tooling</a>
       <a href="#architecture"  class="nav-link">Architecture</a>
       <a href="#dashboard"     class="nav-link">Live Dashboard</a>
@@ -62,6 +63,7 @@
     
     <div class="hero-cta-wrap">
       <a href="#cli" class="btn-primary">Install via PyPI</a>
+      <a href="#why" class="btn-outline">Why It Matters</a>
       <a href="#dashboard" class="btn-outline">View Live Dashboard</a>
       <a href="https://github.com/codeharsh27/drift-watch" target="_blank" rel="noopener" class="btn-outline">GitHub Repo</a>
     </div>
@@ -89,7 +91,56 @@
   </div>
 </section>
 
-<!-- DEVELOPER EXPERIENCE & CLI TOOLING (NEW) -->
+<!-- WHY IT MATTERS (PROBLEM & SOLUTION) -->
+<section class="section why-section" id="why">
+  <div class="container">
+    <div class="section-eyebrow">Core Value Proposition</div>
+    <h2 class="section-title">Why Structural Drift Monitoring Matters</h2>
+    <p class="section-subtitle">
+      Traditional HTTP checks pass when APIs return 200 OK. <code>drift-watch</code> catches the silent schema mutations that break production code.
+    </p>
+
+    <div class="why-grid">
+      <!-- Card 1 -->
+      <div class="why-card card-shadow">
+        <div class="why-icon icon-red">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+        <div class="why-badge badge-red">THE HTTP MONITORING GAP</div>
+        <h3>Blind to Body Mutations</h3>
+        <p>
+          Uptime checkers (Datadog, Better Stack, Pingdom) only test HTTP status codes. If an API endpoint returns <code>200 OK</code>, traditional monitors mark it green—even if the entire JSON response body structure has changed.
+        </p>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="why-card card-shadow">
+        <div class="why-icon icon-amber">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="why-badge badge-amber">THE SILENT DANGER</div>
+        <h3>200 OK Data Corruption</h3>
+        <p>
+          An AI vendor renames <code>usage.cost</code> to <code>billing.amount</code> or drops a token count field. No HTTP 500 error is thrown, but downstream billing, routing, and analytics silently report <code>null</code> or $0.00 spend.
+        </p>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="why-card card-shadow">
+        <div class="why-icon icon-green">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+        </div>
+        <div class="why-badge badge-green">THE SOLUTION</div>
+        <h3>Continuous Dot-Path Hashing</h3>
+        <p>
+          <code>drift-watch</code> recursively flattens API payloads into structural <code>dot.path: type</code> signatures, diffing them against baselines on continuous schedules to exit code <code>1</code> before bad data hits production.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEVELOPER EXPERIENCE & CLI TOOLING -->
 <section class="section cli-section" id="cli">
   <div class="container">
     <div class="section-eyebrow">Developer Tooling</div>
