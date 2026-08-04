@@ -1,7 +1,7 @@
 {
   "builds": [
     {
-      "src": "api/server.py",
+      "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
         "includeFiles": [
@@ -18,7 +18,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/server.py"
+      "dest": "/api/index.py"
     },
     {
       "src": "/case-study",
