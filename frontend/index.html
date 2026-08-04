@@ -29,8 +29,8 @@
     </button>
     
     <div class="nav-links" id="nav-links">
-      <a href="#how-it-works" class="nav-link">How It Works</a>
       <a href="#dashboard"    class="nav-link">Dashboard</a>
+      <a href="#how-it-works" class="nav-link">How It Works</a>
       <a href="#playground"   class="nav-link">Playground</a>
       <a href="#case-study"   class="nav-link">Case Study</a>
       <a href="#dashboard"    class="btn-nav-cta">View Live Data →</a>
@@ -51,7 +51,7 @@
     </div>
     
     <!-- Hero Live Widget -->
-    <div class="hero-widget">
+    <div class="hero-widget card-shadow">
       <div class="hero-widget-label">Live Status</div>
       <div id="hero-live-widget" class="hero-live-pills">
         <span class="pill-loading">Loading live data...</span>
@@ -60,93 +60,6 @@
     
     <div class="hero-scroll-cue">
       <span class="scroll-cue-dot"></span>
-    </div>
-  </div>
-</section>
-
-<!-- BUILT BY -->
-<section class="section built-by">
-  <div class="container">
-    <div class="built-by-card card-shadow">
-      <div class="built-by-eyebrow">The Creator</div>
-      <div class="built-by-header">
-        <div class="built-by-avatar">CH</div>
-        <h3 class="built-by-title">Built by CodeHarsh</h3>
-      </div>
-      <p class="built-by-desc">
-        Full-stack engineer (Flutter / Python / Node / Postgres) moving into AI product work. Built to demonstrate a real infrastructure problem I noticed in AI-vendor-dependent products — currently monitoring live providers below.
-      </p>
-      <div class="built-by-links">
-        <a href="https://github.com/codeharsh27" target="_blank" rel="noopener" class="btn-sm btn-outline">GitHub</a>
-        <a href="https://linkedin.com/in/codeharsh27" target="_blank" rel="noopener" class="btn-sm btn-outline">LinkedIn</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- HOW IT WORKS -->
-<section class="section pipeline-section" id="how-it-works">
-  <div class="container">
-    <div class="section-eyebrow">Pipeline</div>
-    <h2 class="section-title">How It Works</h2>
-    
-    <div class="pipeline-grid">
-      
-      <!-- Step 1 -->
-      <div class="pipeline-step">
-        <div class="step-header">
-          <span class="step-num">01 / Poll</span>
-        </div>
-        <p class="step-desc">Fetch the real live API response from a vendor endpoint.</p>
-        <div class="step-artifact">
-          <div class="artifact-header">Live JSON Response (Truncated)</div>
-          <pre class="code-blk" id="pipeline-step1">Loading...</pre>
-        </div>
-      </div>
-      
-      <!-- Step 2 -->
-      <div class="pipeline-step">
-        <div class="step-header">
-          <span class="step-num">02 / Shape Hash</span>
-        </div>
-        <p class="step-desc">Flatten the JSON into a dot-path type map. This strips away dynamic values and leaves only the structural signature.</p>
-        <div class="step-artifact">
-          <div class="artifact-header">Live Computed Shape</div>
-          <pre class="code-blk" id="pipeline-step2">Loading...</pre>
-        </div>
-      </div>
-      
-      <!-- Step 3 -->
-      <div class="pipeline-step">
-        <div class="step-header">
-          <span class="step-num">03 / Diff</span>
-        </div>
-        <p class="step-desc">Strictly compare the new shape against the known baseline. Any removed fields or mutated types are caught instantly.</p>
-        <div class="step-artifact">
-          <div class="artifact-header">Live Diff Output</div>
-          <pre class="code-blk" id="pipeline-step3">Loading...</pre>
-        </div>
-      </div>
-      
-      <!-- Step 4 -->
-      <div class="pipeline-step">
-        <div class="step-header">
-          <span class="step-num">04 / Alert</span>
-        </div>
-        <p class="step-desc">If a breaking structural change is found, an alert is dispatched via webhook (e.g., to Discord) and the CI pipeline fails.</p>
-        <div class="step-artifact">
-          <div class="artifact-header">Example Webhook Alert</div>
-          <div class="mock-discord">
-            <div class="md-author">drift-watch <span class="md-bot">BOT</span></div>
-            <div class="md-content">
-              <strong>🚨 Drift Detected for <span id="pipeline-step4-vendor">Vendor</span>!</strong><br/>
-              - <strong>Removed:</strong> <code>models.pricing</code> (was float)<br/>
-              - <strong>Type Changed:</strong> <code>models.id</code> (was string -> now int)
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 </section>
@@ -167,7 +80,7 @@
     </div>
     
     <!-- Table -->
-    <div class="table-wrapper">
+    <div class="table-wrapper card-shadow">
       <table class="dash-table" id="dash-table">
         <thead>
           <tr>
@@ -188,6 +101,73 @@
   </div>
 </section>
 
+<!-- HOW IT WORKS -->
+<section class="section pipeline-section" id="how-it-works">
+  <div class="container">
+    <div class="section-eyebrow">Pipeline</div>
+    <h2 class="section-title">How It Works</h2>
+    
+    <div class="pipeline-grid">
+      
+      <!-- Step 1 -->
+      <div class="pipeline-step">
+        <div class="step-header">
+          <span class="step-num">01 / Poll</span>
+        </div>
+        <p class="step-desc">Fetch the real live API response from a vendor endpoint.</p>
+        <div class="step-artifact card-shadow">
+          <div class="artifact-header">Live JSON Response (Truncated)</div>
+          <pre class="code-blk" id="pipeline-step1">Loading...</pre>
+        </div>
+      </div>
+      
+      <!-- Step 2 -->
+      <div class="pipeline-step">
+        <div class="step-header">
+          <span class="step-num">02 / Shape Hash</span>
+        </div>
+        <p class="step-desc">Flatten the JSON into a dot-path type map. This strips away dynamic values and leaves only the structural signature.</p>
+        <div class="step-artifact card-shadow">
+          <div class="artifact-header">Live Computed Shape</div>
+          <pre class="code-blk" id="pipeline-step2">Loading...</pre>
+        </div>
+      </div>
+      
+      <!-- Step 3 -->
+      <div class="pipeline-step">
+        <div class="step-header">
+          <span class="step-num">03 / Diff</span>
+        </div>
+        <p class="step-desc">Strictly compare the new shape against the known baseline. Any removed fields or mutated types are caught instantly.</p>
+        <div class="step-artifact card-shadow">
+          <div class="artifact-header">Live Diff Output</div>
+          <pre class="code-blk" id="pipeline-step3">Loading...</pre>
+        </div>
+      </div>
+      
+      <!-- Step 4 -->
+      <div class="pipeline-step">
+        <div class="step-header">
+          <span class="step-num">04 / Alert</span>
+        </div>
+        <p class="step-desc">If a breaking structural change is found, an alert is dispatched via webhook (e.g., to Discord) and the CI pipeline fails.</p>
+        <div class="step-artifact card-shadow">
+          <div class="artifact-header">Example Webhook Alert</div>
+          <div class="mock-discord">
+            <div class="md-author">drift-watch <span class="md-bot">BOT</span></div>
+            <div class="md-content">
+              <strong>🚨 Drift Detected for <span id="pipeline-step4-vendor">Vendor</span>!</strong><br/>
+              - <strong>Removed:</strong> <code>models.pricing</code> (was float)<br/>
+              - <strong>Type Changed:</strong> <code>models.id</code> (was string -> now int)
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <!-- PLAYGROUND -->
 <section class="section playground-section" id="playground">
   <div class="container">
@@ -199,20 +179,20 @@
           <span class="pg-lbl">Baseline JSON</span>
           <button class="btn-text" onclick="fillPlaygroundExample()">Load Example</button>
         </div>
-        <textarea id="pg-before" class="pg-textarea"></textarea>
+        <textarea id="pg-before" class="pg-textarea card-shadow"></textarea>
       </div>
       <div class="pg-col">
         <div class="pg-label-row">
           <span class="pg-lbl">Current JSON</span>
         </div>
-        <textarea id="pg-after" class="pg-textarea"></textarea>
+        <textarea id="pg-after" class="pg-textarea card-shadow"></textarea>
       </div>
     </div>
     <div class="pg-actions">
       <button class="btn-primary" id="btn-run-diff" onclick="runPlaygroundDiff()">Run Diff</button>
       <span id="pg-error" class="pg-error"></span>
     </div>
-    <div id="pg-results" class="pg-results hidden"></div>
+    <div id="pg-results" class="pg-results card-shadow hidden"></div>
   </div>
 </section>
 
@@ -251,6 +231,11 @@
     <div class="footer-left">
       <div class="footer-logo">drift-watch</div>
       <p class="footer-desc">Structural drift detector for AI vendor API responses.</p>
+      <p class="footer-desc" style="margin-top: 8px;">
+        Built by CodeHarsh &middot; 
+        <a href="https://github.com/codeharsh27" target="_blank" rel="noopener" class="footer-link">GitHub</a> &middot; 
+        <a href="https://linkedin.com/in/codeharsh27" target="_blank" rel="noopener" class="footer-link">LinkedIn</a>
+      </p>
     </div>
     <div class="footer-right">
       <a href="https://github.com/codeharsh27/drift-watch" class="footer-link">GitHub Repo</a>
