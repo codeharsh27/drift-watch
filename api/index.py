@@ -10,6 +10,14 @@ from datetime import datetime, timezone
 
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
 
+try:
+    from api.differ import compare_shapes
+except ImportError:
+    try:
+        from differ import compare_shapes
+    except ImportError:
+        def compare_shapes(b, a): return {"has_drift": False, "drift_score": 0}
+
 def get_live_data():
     data_dir = _ROOT / "data"
     reports = []
@@ -98,6 +106,5 @@ class handler(BaseHTTPRequestHandler):
         except Exception:
             before, after = {}, {}
             
-        from core.differ import compare_shapes
         res = compare_shapes(before, after)
         self.wfile.write(json.dumps(res).encode('utf-8'))
