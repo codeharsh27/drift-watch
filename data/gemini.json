@@ -1,0 +1,19 @@
+{
+  "name": "Gemini",
+  "history": [
+    {
+      "timestamp": "2026-08-01T00:00:00.000000+00:00",
+      "shape": {
+        "models": "list",
+        "models.name": "string",
+        "models.version": "string",
+        "models.pricing": "float"
+      },
+      "has_drift": false,
+      "drift_score": 0,
+      "removed": [],
+      "added": [],
+      "type_changed": []
+    }
+  ]
+}
