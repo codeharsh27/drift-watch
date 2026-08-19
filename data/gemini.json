@@ -859,14 +859,6 @@
   },
   "history": [
     {
-      "timestamp": "2026-08-04T12:33:53.782905+00:00",
-      "removed": [],
-      "added": [],
-      "type_changed": [],
-      "has_drift": false,
-      "drift_score": 0
-    },
-    {
       "timestamp": "2026-08-04T12:41:18.647296+00:00",
       "removed": [],
       "added": [],
@@ -1732,6 +1724,22 @@
     },
     {
       "timestamp": "2026-08-19T00:43:15.965126+00:00",
+      "removed": [
+        {
+          "field": "nextPageToken",
+          "was_type": "str",
+          "before_value": "Ch9tb2RlbHMvdmVvLTMuMS1nZW5lcmF0ZS1wcmV2\u2026",
+          "after_value": "null",
+          "severity": "critical"
+        }
+      ],
+      "added": [],
+      "type_changed": [],
+      "has_drift": true,
+      "drift_score": 6
+    },
+    {
+      "timestamp": "2026-08-19T04:28:51.500343+00:00",
       "removed": [
         {
           "field": "nextPageToken",
