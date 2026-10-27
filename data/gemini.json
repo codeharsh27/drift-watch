@@ -859,14 +859,6 @@
   },
   "history": [
     {
-      "timestamp": "2026-10-02T23:26:42.156990+00:00",
-      "removed": [],
-      "added": [],
-      "type_changed": [],
-      "has_drift": false,
-      "drift_score": 0
-    },
-    {
       "timestamp": "2026-10-03T03:02:48.708324+00:00",
       "removed": [],
       "added": [],
@@ -1652,6 +1644,14 @@
     },
     {
       "timestamp": "2026-10-27T03:01:39.504667+00:00",
+      "removed": [],
+      "added": [],
+      "type_changed": [],
+      "has_drift": false,
+      "drift_score": 0
+    },
+    {
+      "timestamp": "2026-10-27T09:27:44.285063+00:00",
       "removed": [],
       "added": [],
       "type_changed": [],
